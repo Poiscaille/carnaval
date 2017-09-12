@@ -1,0 +1,9 @@
+{
+  "name": "carnaval",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yamsellem/carnaval.git"
+  },
+  "license": "Apache-2.0"
+}
