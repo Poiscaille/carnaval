@@ -27,10 +27,7 @@ class Thing extends Domain {
     }
 }
 
-const ThingMapping = Mapping.of(Thing, {
-    name: {mapper: String}
-});
-
+const ThingMapping = Mapping.pick(Thing, 'name');
 
 test('decode', t => {
     const json = {name: 'Shoes'};
@@ -85,9 +82,8 @@ class Box extends Domain {
     }
 }
 
-const BoxMapping = Mapping.of(Box, {
-    size: {mapper: String},
-    thing: {mapper: ThingMapping}
+const BoxMapping = Mapping.pick(Box, 'size', 'thing').mapWith({
+    thing: ThingMapping
 });
 
 test('freeze deep', t => {
@@ -122,10 +118,7 @@ class Gift extends Domain {
     }
 }
 
-const GiftMapping = Mapping.of(Gift, {
-    size: {mapper: String},
-    names: {mapper: [String]}
-});
+const GiftMapping = Mapping.pick(Gift, 'size', 'names');
 
 test('validate array', t => {
     const json = {size: 'Medium', names: ['Shoes', 'Shirt']};

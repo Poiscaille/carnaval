@@ -12,9 +12,7 @@ class Thing extends Domain {
     }
 }
 
-const ThingMapping = Mapping.of(Thing, {
-    name: {mapper: String}
-});
+const ThingMapping = Mapping.pick(Thing, 'name');
 
 test('decode', t => {
 
@@ -43,9 +41,8 @@ class Box extends Domain {
     }
 }
 
-const BoxMapping = Mapping.of(Box, {
-    size: {mapper: String},
-    thing: {mapper: ThingMapping}
+const BoxMapping = Mapping.pick(Box, 'size', 'thing').mapWith({
+    thing: ThingMapping
 });
 
 test('decode deep', t => {
@@ -77,10 +74,7 @@ class Gift extends Domain {
     }
 }
 
-const GiftMapping = Mapping.of(Gift, {
-    size: {mapper: String},
-    names: {mapper: [String]}
-});
+const GiftMapping = Mapping.pick(Gift, 'size', 'names');
 
 test('decode array', t => {
     const json = {size: 'Medium', names: ['Shoes', 'Shirt']};
@@ -116,9 +110,8 @@ class Bookcase extends Domain {
     }
 }
 
-const BookcaseMapping = Mapping.of(Bookcase, {
-    size: {mapper: String},
-    things: {mapper: [ThingMapping]}
+const BookcaseMapping = Mapping.pick(Bookcase, 'size', 'things').mapWith({
+    things: ThingMapping
 });
 
 test('decode array deep', t => {
@@ -151,20 +144,16 @@ test('encode array deep', t => {
 class Transform extends Domain {
     get props() {
         return {
-            date: {
-                type: Date
-            }
+            date: Date
         };
     }
 }
 
-const TransformMapping = Mapping.of(Transform, {
+const TransformMapping = Mapping.pick(Transform, 'date').mapWith({
     date: {
         encode: value => value.getTime(),
         decode: value => new Date(value)
     }
-    // date: { mapper: Number, encode: value => value.getTime(), decode: value => new Date(value) }
-    // TODO works without use?
 });
 
 test('decode transtyped', t => {
@@ -186,7 +175,7 @@ test('encode transtyped', t => {
 test('decode invalid', t => {
     const error = t.throws(() => {
         class Invalid {} // no Domain inheritance
-        class InvalidMapping extends Mapping.of(Invalid) {} // eslint-disable-line no-unused-vars
+        class InvalidMapping extends Mapping.pick(Invalid) {} // eslint-disable-line no-unused-vars
     });
 
     t.is(error.message, 'Clazz should be a Domain subclass');
@@ -201,20 +190,19 @@ class Custom extends Domain {
     }
 }
 
-const CustomMapping = Mapping.of(Custom,
-    object => {
+const CustomMapping = Mapping.pick(Custom)
+    .encodeWith(object => {
         return {
             time: object.date.getTime(),
-            thing: {mapper: ThingMapping}
+            thing: ThingMapping
         };
-    },
-    json => {
+    })
+    .decodeWith(json => {
         return new Custom({
             date: new Date(json.time),
-            thing: {mapper: ThingMapping}
+            thing: ThingMapping
         });
-    }
-);
+    });
 
 test('decode custom', t => {
     const json = {time: 1483916400000, thing: {name: 'Shoes'}};

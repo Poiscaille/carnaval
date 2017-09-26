@@ -13,9 +13,7 @@ class Thing extends Domain {
     }
 }
 
-const ThingMapping = Mapping.of(Thing, {
-    name: {mapper: String}
-});
+const ThingMapping = Mapping.pick(Thing, 'name');
 
 test('validate', t => {
     const json = {name: 'Shoes'};
@@ -51,18 +49,13 @@ class Box extends Domain {
     get props() {
         return {
             size: {type: String, rules: {required: true}},
-            thing: {type: Thing, rules: {
-                props: {
-                    name: {type: String, rules: {required: true}}
-                }
-            }}
+            thing: Thing
         };
     }
 }
 
-const BoxMapping = Mapping.of(Box, {
-    size: {mapper: String},
-    thing: {mapper: ThingMapping}
+const BoxMapping = Mapping.pick(Box, 'size', 'thing').mapWith({
+    thing: ThingMapping
 });
 
 test('validate deep error', t => {
@@ -85,10 +78,7 @@ class Gift extends Domain {
     }
 }
 
-const GiftMapping = Mapping.of(Gift, {
-    size: {mapper: String},
-    names: {mapper: [String]}
-});
+const GiftMapping = Mapping.pick(Gift, 'size', 'names');
 
 test('validate array', t => {
     const json = {size: 'Medium', names: ['Shoes', 'Shirt']};
@@ -139,9 +129,8 @@ class Bookcase extends Domain {
     }
 }
 
-const BookcaseMapping = Mapping.of(Bookcase, {
-    size: {mapper: String},
-    things: {mapper: [ThingMapping]}
+const BookcaseMapping = Mapping.pick(Bookcase, 'size', 'things').mapWith({
+    things: ThingMapping
 });
 
 test('validate array deep error', t => {
