@@ -11,7 +11,8 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "ajv": "5.2.2"
+        "ajv": "5.2.2",
+        "bluebird": "3.5.0"
     },
     "devDependencies": {
         "ava": "0.22.0",

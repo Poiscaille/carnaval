@@ -18,31 +18,41 @@ const ThingMapping = Mapping.pick(Thing, 'name');
 test('validate', t => {
     const json = {name: 'Shoes'};
     const codec = carnaval().decoders(object => validate(object)).codec(ThingMapping);
-    const thing = codec.decode(json);
 
-    t.is(thing.name, json.name);
+    return codec.decode(json)
+    .then(thing => {
+        t.is(thing.name, json.name);
+    });
+});
+
+test('validate as promise', t => {
+    const json = {name: 'Shoes'};
+    const codec = carnaval().decoders(object => Promise.resolve(object).then(object => validate(object))).codec(ThingMapping);
+
+    return codec.decode(json)
+    .then(thing => {
+        t.is(thing.name, json.name);
+    });
 });
 
 test('validate required error', t => {
     const json = {name: null};
     const codec = carnaval().decoders(object => validate(object)).codec(ThingMapping);
 
-    const error = t.throws(() => {
-        const thing = codec.decode(json); // eslint-disable-line no-unused-vars
+    return codec.decode(json)
+    .catch(error => {
+        t.is(error.message, 'should have required property \'name\'');
     });
-
-    t.is(error.message, 'should have required property \'name\'');
 });
 
 test('validate typed error', t => {
     const json = {name: 12};
     const codec = carnaval().decoders(object => validate(object)).codec(ThingMapping);
 
-    const error = t.throws(() => {
-        const thing = codec.decode(json); // eslint-disable-line no-unused-vars
+    return codec.decode(json)
+    .catch(error => {
+        t.is(error.message, 'name should be string');
     });
-
-    t.is(error.message, 'name should be string');
 });
 
 class Box extends Domain {
@@ -62,11 +72,10 @@ test('validate deep error', t => {
     const json = {size: 'Medium', thing: null};
     const codec = carnaval().decoders(object => validate(object)).codec(BoxMapping);
 
-    const error = t.throws(() => {
-        const box = codec.decode(json); // eslint-disable-line no-unused-vars
+    return codec.decode(json)
+    .catch(error => {
+        t.is(error.message, 'thing should have required property \'name\'');
     });
-
-    t.is(error.message, 'thing should have required property \'name\'');
 });
 
 class Gift extends Domain {
@@ -83,37 +92,36 @@ const GiftMapping = Mapping.pick(Gift, 'size', 'names');
 test('validate array', t => {
     const json = {size: 'Medium', names: ['Shoes', 'Shirt']};
     const codec = carnaval().decoders(object => validate(object)).codec(GiftMapping);
-    const gift = codec.decode(json);
 
-    t.true(gift instanceof Gift);
-    t.is(gift.size, json.size);
-    t.true(gift.names instanceof Array);
-    t.is(gift.names[0].constructor, String);
-    t.is(gift.names[1].constructor, String);
-    t.is(gift.names[0], json.names[0]);
-    t.is(gift.names[1], json.names[1]);
+    return codec.decode(json).then(gift => {
+        t.true(gift instanceof Gift);
+        t.is(gift.size, json.size);
+        t.true(gift.names instanceof Array);
+        t.is(gift.names[0].constructor, String);
+        t.is(gift.names[1].constructor, String);
+        t.is(gift.names[0], json.names[0]);
+        t.is(gift.names[1], json.names[1]);
+    });
 });
 
 test('validate array typed error', t => {
     const json = {size: 'Medium', names: ['Shoes', 12]};
     const codec = carnaval().decoders(object => validate(object)).codec(GiftMapping);
 
-    const error = t.throws(() => {
-        const gift = codec.decode(json); // eslint-disable-line no-unused-vars
+    return codec.decode(json)
+    .catch(error => {
+        t.is(error.message, 'names[1] should be string');
     });
-
-    t.is(error.message, 'names[1] should be string');
 });
 
 test('validate array condition error', t => {
     const json = {size: 'Medium', names: ['Shoes', 'Shirt', 'Pants']};
     const codec = carnaval().decoders(object => validate(object)).codec(GiftMapping);
 
-    const error = t.throws(() => {
-        const gift = codec.decode(json); // eslint-disable-line no-unused-vars
+    return codec.decode(json)
+    .catch(error => {
+        t.is(error.message, 'names should NOT have more than 2 items');
     });
-
-    t.is(error.message, 'names should NOT have more than 2 items');
 });
 
 class Bookcase extends Domain {
@@ -137,9 +145,8 @@ test('validate array deep error', t => {
     const json = {size: 'Medium', things: [{name: 'Shoes'}, {name: 12}]};
     const codec = carnaval().decoders(object => validate(object)).codec(BookcaseMapping);
 
-    const error = t.throws(() => {
-        const bookcase = codec.decode(json); // eslint-disable-line no-unused-vars
+    return codec.decode(json)
+    .catch(error => {
+        t.is(error.message, 'things[1].name should be string');
     });
-
-    t.is(error.message, 'things[1].name should be string');
 });

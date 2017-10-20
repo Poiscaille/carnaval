@@ -32,41 +32,42 @@ const ThingMapping = Mapping.pick(Thing, 'name');
 test('decode', t => {
     const json = {name: 'Shoes'};
     const codec = carnaval().codec(ThingMapping);
-    const thing = codec.decode(json);
 
-    t.true(thing instanceof Thing);
-    t.is(thing.name, json.name);
+    return codec.decode(json).then(thing => {
+        t.true(thing instanceof Thing);
+        t.is(thing.name, json.name);
+    });
 });
 
 test('freeze', t => {
     const json = {name: 'Shoes'};
     const codec = carnaval().decoders(object => Object.freeze(object)).codec(ThingMapping);
-    const thing = codec.decode(json);
 
-    const error = t.throws(() => {
-        thing.name = 'Dress';
+    return codec.decode(json).then(thing => {
+        const error = t.throws(() => {
+            thing.name = 'Dress';
+        });
+        t.is(error.message, 'Cannot assign to read only property \'name\' of object \'#<Thing>\'');
     });
-
-    t.is(error.message, 'Cannot assign to read only property \'name\' of object \'#<Thing>\'');
 });
 
 test('validate', t => {
     const json = {name: 'Shoes'};
     const codec = carnaval().decoders(object => validate(object)).codec(ThingMapping);
-    const thing = codec.decode(json);
 
-    t.is(thing.name, json.name);
+    return codec.decode(json).then(thing => {
+        t.is(thing.name, json.name);
+    });
 });
 
 test('validate required error', t => {
     const json = {name: null};
     const codec = carnaval().decoders(object => validate(object)).codec(ThingMapping);
 
-    const error = t.throws(() => {
-        const thing = codec.decode(json); // eslint-disable-line no-unused-vars
+    return codec.decode(json)
+    .catch(error => {
+        t.is(error.message, 'name is required');
     });
-
-    t.is(error.message, 'name is required');
 });
 
 class Box extends Domain {
@@ -89,24 +90,23 @@ const BoxMapping = Mapping.pick(Box, 'size', 'thing').mapWith({
 test('freeze deep', t => {
     const json = {size: 'Medium', thing: {name: 'Shoes'}};
     const codec = carnaval().decoders(object => deepFreeze(object)).codec(BoxMapping);
-    const box = codec.decode(json);
 
-    const error = t.throws(() => {
-        box.thing.name = 'Dress';
+    return codec.decode(json).then(box => {
+        const error = t.throws(() => {
+            box.thing.name = 'Dress';
+        });
+        t.is(error.message, 'Cannot assign to read only property \'name\' of object \'#<Thing>\'');
     });
-
-    t.is(error.message, 'Cannot assign to read only property \'name\' of object \'#<Thing>\'');
 });
 
 test('validate deep error', t => {
     const json = {size: 'Medium', thing: null};
     const codec = carnaval().decoders(object => validate(object)).codec(BoxMapping);
 
-    const error = t.throws(() => {
-        const box = codec.decode(json); // eslint-disable-line no-unused-vars
+    return codec.decode(json)
+    .catch(error => {
+        t.is(error.message, 'thing.name is required');
     });
-
-    t.is(error.message, 'thing.name is required');
 });
 
 class Gift extends Domain {
@@ -123,13 +123,14 @@ const GiftMapping = Mapping.pick(Gift, 'size', 'names');
 test('validate array', t => {
     const json = {size: 'Medium', names: ['Shoes', 'Shirt']};
     const codec = carnaval().decoders(object => validate(object)).codec(GiftMapping);
-    const gift = codec.decode(json);
 
-    t.true(gift instanceof Gift);
-    t.is(gift.size, json.size);
-    t.true(gift.names instanceof Array);
-    t.is(gift.names[0].constructor, String);
-    t.is(gift.names[1].constructor, String);
-    t.is(gift.names[0], json.names[0]);
-    t.is(gift.names[1], json.names[1]);
+    return codec.decode(json).then(gift => {
+        t.true(gift instanceof Gift);
+        t.is(gift.size, json.size);
+        t.true(gift.names instanceof Array);
+        t.is(gift.names[0].constructor, String);
+        t.is(gift.names[1].constructor, String);
+        t.is(gift.names[0], json.names[0]);
+        t.is(gift.names[1], json.names[1]);
+    });
 });
