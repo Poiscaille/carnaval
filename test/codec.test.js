@@ -233,3 +233,6 @@ test('encode custom', t => {
         t.is(json.thing.name, custom.thing.name);
     });
 });
+
+// TODO Dates (assign, freeze)
+// TODO May be handle encode(not object) & decode(not object)

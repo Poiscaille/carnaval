@@ -4,6 +4,7 @@ const Promise = require('bluebird');
 const Domain = require('../lib/domain');
 const Mapping = require('../lib/mapping');
 const carnaval = require('../lib/carnaval');
+const validate = require('../lib/validator');
 
 const repository = {
     store: [
@@ -70,6 +71,15 @@ class Thing extends Domain {
             creation: Date
         };
     }
+    get options() {
+        return {
+            frozen: true,
+            validate: validate
+        };
+    }
+    setCompany(company) {
+        return this.assign({company: company});
+    }
 }
 
 const ThingViewMapping = Mapping.pick(Thing, 'id', 'name', 'price', 'creation');
@@ -89,16 +99,12 @@ const ThingRepositoryMapping = Mapping.pickAll(Thing)
 test('get /route', t => {
     const user = {company: 'Green'};
 
-    const codecView = carnaval().decoders(object => Object.freeze(object)).codec(ThingViewMapping);
-    const repositoryView = carnaval().decoders(object => Object.freeze(object)).codec(ThingRepositoryMapping);
+    const codecView = carnaval().codec(ThingViewMapping);
+    const repositoryView = carnaval().codec(ThingRepositoryMapping);
 
     return repository.shield(user).find()
-    .then(datas => {
-        return Promise.map(datas, data => repositoryView.decode(data));
-    })
-    .then(things => {
-        return Promise.map(things, thing => codecView.encode(thing));
-    })
+    .then(datas => repositoryView.decode(datas))
+    .then(things => codecView.encode(things))
     .then(jsons => {
         t.is(jsons.length, 6);
         for (let i = 0; i < 6; i++) {
@@ -115,16 +121,12 @@ test('get /route/:id', t => {
         json.formattedPrice = ((json.price || 0) / 100).toFixed(2) + '€';
     };
 
-    const codecView = carnaval().encoders(json => formattedPrice(json)).decoders(object => Object.freeze(object)).codec(ThingViewMapping);
-    const repositoryView = carnaval().decoders(object => Object.freeze(object)).codec(ThingRepositoryMapping);
+    const codecView = carnaval().encoders(json => formattedPrice(json)).codec(ThingViewMapping);
+    const repositoryView = carnaval().codec(ThingRepositoryMapping);
 
     return repository.shield(user).findById(id)
-    .then(data => {
-        return repositoryView.decode(data);
-    })
-    .then(thing => {
-        return codecView.encode(thing);
-    })
+    .then(data => repositoryView.decode(data))
+    .then(thing => codecView.encode(thing))
     .then(json => {
         t.is(json.id, id);
         t.is(json.name, 'Kidstown');
@@ -139,26 +141,15 @@ test('post /route', t => {
     const user = {company: 'Green'};
 
     const body = {name: '319 Men', price: 490};
-    const company = json => {
-        json.company = user.company;
-    };
 
-    const codecView = carnaval().decoders(object => company(object), object => Object.freeze(object)).codec(ThingViewMapping);
-    const repositoryView = carnaval().decoders(object => Object.freeze(object)).codec(ThingRepositoryMapping);
+    const codecView = carnaval().decoders(object => object.setCompany(user.company)).codec(ThingViewMapping);
+    const repositoryView = carnaval().codec(ThingRepositoryMapping);
 
     return codecView.decode(body)
-    .then(thing => {
-        return repositoryView.encode(thing);
-    })
-    .then(data => {
-        return repository.shield(user).insert(data);
-    })
-    .then(data => {
-        return repositoryView.decode(data);
-    })
-    .then(thing => {
-        return codecView.encode(thing);
-    })
+    .then(thing => repositoryView.encode(thing))
+    .then(data => repository.shield(user).insert(data))
+    .then(data => repositoryView.decode(data))
+    .then(thing => codecView.encode(thing))
     .then(json => {
         t.is(json.id, 10);
         t.is(json.name, '319 Men');
@@ -172,31 +163,18 @@ test('put /route/:id', t => {
     const user = {company: 'Green'};
 
     const body = {id: 3, name: 'Alamo Military Collectibles', price: 490};
-    const company = json => {
-        json.company = user.company;
-    };
 
-    const codecView = carnaval().decoders(object => company(object), object => Object.freeze(object)).codec(ThingViewMapping);
-    const repositoryView = carnaval().decoders(object => Object.freeze(object)).codec(ThingRepositoryMapping);
+    const codecView = carnaval().decoders(object => object.setCompany(user.company)).codec(ThingViewMapping);
+    const repositoryView = carnaval().codec(ThingRepositoryMapping);
 
     const repositoryShield = repository.shield(user);
 
     return codecView.decode(body)
-    .then(thing => {
-        return repositoryView.encode(thing);
-    })
-    .then(data => {
-        return repositoryShield.update(data);
-    })
-    .then(() => {
-        return repositoryShield.findById(body.id);
-    })
-    .then(data => {
-        return repositoryView.decode(data);
-    })
-    .then(thing => {
-        return codecView.encode(thing);
-    })
+    .then(thing => repositoryView.encode(thing))
+    .then(data => repositoryShield.update(data))
+    .then(() => repositoryShield.findById(body.id))
+    .then(data => repositoryView.decode(data))
+    .then(thing => codecView.encode(thing))
     .then(json => {
         t.is(json.id, 3);
         t.is(json.name, 'Alamo Military Collectibles');
@@ -210,25 +188,16 @@ test('delete /route/:id', t => {
     const user = {company: 'Green'};
 
     const id = 4;
-    const company = json => {
-        json.company = user.company;
-    };
 
-    const codecView = carnaval().decoders(object => company(object), object => Object.freeze(object)).codec(ThingViewMapping);
-    const repositoryView = carnaval().decoders(object => Object.freeze(object)).codec(ThingRepositoryMapping);
+    const codecView = carnaval().codec(ThingViewMapping);
+    const repositoryView = carnaval().codec(ThingRepositoryMapping);
 
     const repositoryShield = repository.shield(user);
 
     return repositoryShield.delete(id)
-    .then(() => {
-        return repositoryShield.find();
-    })
-    .then(datas => {
-        return Promise.map(datas, data => repositoryView.decode(data));
-    })
-    .then(things => {
-        return Promise.map(things, thing => codecView.encode(thing));
-    })
+    .then(() => repositoryShield.find())
+    .then(datas => repositoryView.decode(datas))
+    .then(things => codecView.encode(things))
     .then(jsons => {
         t.is(jsons.length, 5);
         for (let i = 0; i < 5; i++) {
@@ -238,4 +207,3 @@ test('delete /route/:id', t => {
 });
 
 // TODO price 10% discount done via frozen object
-// TODO validation
