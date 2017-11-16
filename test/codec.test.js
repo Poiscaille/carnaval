@@ -4,6 +4,61 @@ const Codec = require('../lib/codec');
 const Mapping = require('../lib/mapping');
 const Domain = require('../lib/domain');
 
+class Basic {
+    constructor(data) {
+        Object.assign(this, data);
+    }
+    get props() {
+        return {
+            name: String
+        };
+    }
+}
+
+const BasicMapping = Mapping.pick(Basic, 'name');
+
+test('decode', t => {
+    const json = {name: 'Shoes'};
+    const codec = new Codec(BasicMapping);
+
+    return codec.decode(json).then(basic => {
+        t.true(basic instanceof Basic);
+        t.is(basic.name, json.name);
+    });
+});
+
+test('encode', t => {
+    const basic = new Basic({name: 'Shoes'});
+    const codec = new Codec(BasicMapping);
+
+    return codec.encode(basic).then(json => {
+        t.is(json.name, basic.name);
+    });
+});
+
+const DateMapping = Mapping.pickAll(Date)
+.encodeWith(object => object ? object.getTime() : undefined)
+.decodeWith(json => json ? new Date(json) : undefined);
+
+test('decode date', t => {
+    const timestamp = 1483916400000;
+    const codec = new Codec(DateMapping);
+
+    return codec.decode(timestamp).then(date => {
+        t.is(date.getTime(), new Date(timestamp).getTime());
+    });
+});
+
+test('encode date', t => {
+    const timestamp = 1483916400000;
+    const date = new Date(timestamp);
+    const codec = new Codec(DateMapping);
+
+    return codec.encode(date).then(timestamp => {
+        t.is(new Date(timestamp).getTime(), date.getTime());
+    });
+});
+
 class Thing extends Domain {
     get props() {
         return {
@@ -42,9 +97,7 @@ class Box extends Domain {
     }
 }
 
-const BoxMapping = Mapping.pick(Box, 'size', 'thing').mapWith({
-    thing: ThingMapping
-});
+const BoxMapping = Mapping.pick(Box, 'size', 'thing').mapWith(ThingMapping);
 
 test('decode deep', t => {
     const json = {size: 'Medium', thing: {name: 'Shoes'}};
@@ -115,9 +168,7 @@ class Bookcase extends Domain {
     }
 }
 
-const BookcaseMapping = Mapping.pick(Bookcase, 'size', 'things').mapWith({
-    things: ThingMapping
-});
+const BookcaseMapping = Mapping.pick(Bookcase, 'size', 'things').mapWith(ThingMapping);
 
 test('decode array deep', t => {
     const json = {size: 'Medium', things: [{name: 'Shoes'}, {name: 'Shirt'}]};
@@ -148,7 +199,7 @@ test('encode array deep', t => {
     });
 });
 
-class Transform extends Domain {
+class Event extends Domain {
     get props() {
         return {
             date: Date
@@ -156,38 +207,53 @@ class Transform extends Domain {
     }
 }
 
-const TransformMapping = Mapping.pick(Transform, 'date').mapWith({
+const EventPropertyMapping = Mapping.pick(Event, 'date').mapWith({
     date: {
         encode: value => value.getTime(),
         decode: value => new Date(value)
     }
 });
 
-test('decode transtyped', t => {
+test('decode property mapping', t => {
     const json = {date: 1483916400000};
-    const codec = new Codec(TransformMapping);
+    const codec = new Codec(EventPropertyMapping);
 
     return codec.decode(json).then(mixed => {
         t.is(mixed.date.getTime(), new Date('01/09/2017').getTime());
     });
 });
 
-test('encode transtyped', t => {
-    const mixed = new Transform({date: new Date('01/09/2017')});
-    const codec = new Codec(TransformMapping);
+test('encode property mapping', t => {
+    const mixed = new Event({date: new Date('01/09/2017')});
+    const codec = new Codec(EventPropertyMapping);
 
     return codec.encode(mixed).then(json => {
         t.is(json.date, 1483916400000);
     });
 });
 
-test('decode invalid', t => {
-    const error = t.throws(() => {
-        class Invalid {} // no Domain inheritance
-        class InvalidMapping extends Mapping.pick(Invalid) {} // eslint-disable-line no-unused-vars
-    });
+const EventReferenceCopyMapping = Mapping.pickAll(Event);
 
-    t.is(error.message, 'Clazz should be a Domain subclass');
+test('decode date as same', t => {
+    const date = new Date(1483916400000);
+    const json = {date: date};
+    const codec = new Codec(EventReferenceCopyMapping);
+
+    return codec.decode(json).then(transform => {
+        t.is(transform.date.getTime(), date.getTime());
+        t.is(transform.date, date);
+    });
+});
+
+test('encode date as same', t => {
+    const date = new Date(1483916400000);
+    const transform = new Event({date: date});
+    const codec = new Codec(EventReferenceCopyMapping);
+
+    return codec.encode(transform).then(json => {
+        t.is(json.date.getTime(), date.getTime());
+        t.is(json.date, date);
+    });
 });
 
 class Custom extends Domain {
@@ -234,5 +300,64 @@ test('encode custom', t => {
     });
 });
 
-// TODO Dates (assign, freeze)
-// TODO May be handle encode(not object) & decode(not object)
+const EventMapping = Mapping.pickAll(Event).mapWith(DateMapping);
+
+test('decode type mappings', t => {
+    const json = {date: 1483916400000};
+    const codec = new Codec(EventMapping);
+
+    return codec.decode(json).then(event => {
+        t.true(event instanceof Event);
+        t.is(event.date.getTime(), new Date(json.date).getTime());
+    });
+});
+
+test('encode type mappings', t => {
+    const event = new Event({date: new Date(1483916400000)});
+    const codec = new Codec(EventMapping);
+
+    return codec.encode(event).then(json => {
+        t.is(json.date, 1483916400000);
+        t.is(new Date(json.date).getTime(), event.date.getTime());
+    });
+});
+
+test('encode type mappings empty', t => {
+    const event = new Event();
+    const codec = new Codec(EventMapping);
+
+    return codec.encode(event).then(json => {
+        t.is(json.date, undefined);
+    });
+});
+
+class EmbeddedEvent extends Domain {
+    get props() {
+        return {
+            event: Event
+        };
+    }
+}
+
+const EmbeddedEventMapping = Mapping.pickAll(EmbeddedEvent)
+.mapWith(Mapping.pickAll(Event), DateMapping);
+
+test('decode deep with mappings', t => {
+    const json = {event: {date: 1483916400000}};
+    const codec = new Codec(EmbeddedEventMapping);
+
+    return codec.decode(json).then(deep => {
+        t.true(deep.event instanceof Event);
+        t.is(deep.event.date.getTime(), new Date(json.event.date).getTime());
+    });
+});
+
+test('encode deep with mappings', t => {
+    const deep = new EmbeddedEvent({event: new Event({date: new Date(1483916400000)})});
+    const codec = new Codec(EmbeddedEventMapping);
+
+    return codec.encode(deep).then(json => {
+        t.is(json.event.date, 1483916400000);
+        t.is(new Date(json.event.date).getTime(), deep.event.date.getTime());
+    });
+});

@@ -84,16 +84,11 @@ class Thing extends Domain {
 
 const ThingViewMapping = Mapping.pick(Thing, 'id', 'name', 'price', 'creation');
 
-const ThingRepositoryMapping = Mapping.pickAll(Thing)
-.encodeWith(object => {
-    return Object.assign({}, object, {
-        creation: !object.creation ? '' : object.creation.toISOString().slice(0, 10)
-    });
-})
-.decodeWith(json => {
-    return new Thing(Object.assign({}, json, {
-        creation: !json.creation ? null : new Date(json.creation)
-    }));
+const ThingRepositoryMapping = Mapping.pickAll(Thing).mapWith({
+    creation: {
+        encode: value => !value ? '' : value.toISOString().slice(0, 10),
+        decode: value => !value ? null : new Date(value)
+    }
 });
 
 test('get /route', t => {

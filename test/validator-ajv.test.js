@@ -64,9 +64,7 @@ class Box extends Domain {
     }
 }
 
-const BoxMapping = Mapping.pick(Box, 'size', 'thing').mapWith({
-    thing: ThingMapping
-});
+const BoxMapping = Mapping.pick(Box, 'size', 'thing').mapWith(ThingMapping);
 
 test('validate deep error', t => {
     const json = {size: 'Medium', thing: null};
@@ -137,9 +135,7 @@ class Bookcase extends Domain {
     }
 }
 
-const BookcaseMapping = Mapping.pick(Bookcase, 'size', 'things').mapWith({
-    things: ThingMapping
-});
+const BookcaseMapping = Mapping.pick(Bookcase, 'size', 'things').mapWith(ThingMapping);
 
 test('validate array deep error', t => {
     const json = {size: 'Medium', things: [{name: 'Shoes'}, {name: 12}]};

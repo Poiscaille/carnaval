@@ -27,7 +27,7 @@ const ThingMapping = Mapping.pick(Thing)
     });
 });
 
-test('decode', t => {
+test('decode with providers', t => {
     const json = {name: 'Shoes'};
     const codec = carnaval()
     .providers({
@@ -43,7 +43,7 @@ test('decode', t => {
     });
 });
 
-test('encode', t => {
+test('encode with providers', t => {
     const thing = new Thing({name: 'Shoes'});
     const codec = carnaval()
     .providers({
@@ -58,7 +58,7 @@ test('encode', t => {
     });
 });
 
-test('freeze', t => {
+test('freeze with providers', t => {
     const ThingMapping = Mapping.pick(Thing, 'name');
 
     const json = {name: 'Shoes'};
