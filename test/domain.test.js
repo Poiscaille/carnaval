@@ -96,21 +96,21 @@ class FrozenValidatedThing extends Domain {
     }
 }
 
-test('domain frozen validated valid creation', t => {
+test('domain frozen valid creation', t => {
     const name = 'Kidstown';
     const thing = new FrozenValidatedThing({name});
 
     t.is(thing.name, name);
 });
 
-test('domain frozen validated invalid creation', t => {
+test('domain frozen invalid creation', t => {
     const error = t.throws(() => {
         const thing = new FrozenValidatedThing(); // eslint-disable-line no-unused-vars
     });
     t.is(error.message, 'name is required');
 });
 
-test('domain frozen validated valid update', t => {
+test('domain frozen valid update', t => {
     const before = 'Kidstown';
     const after = 'Foundry Inc';
     const thing = new FrozenValidatedThing({name: before});
@@ -120,7 +120,7 @@ test('domain frozen validated valid update', t => {
     t.is(assigned.name, after);
 });
 
-test('domain frozen validated invalid update', t => {
+test('domain frozen invalid update', t => {
     const before = 'Kidstown';
     const after = null;
     const thing = new FrozenValidatedThing({name: before});

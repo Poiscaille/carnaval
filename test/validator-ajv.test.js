@@ -13,11 +13,11 @@ class Thing extends Domain {
     }
 }
 
-const ThingMapping = Mapping.pick(Thing, 'name');
+const thingMapping = new Mapping(Thing).select('name');
 
 test('validate', t => {
     const json = {name: 'Shoes'};
-    const codec = carnaval().decoders(object => validate(object)).codec(ThingMapping);
+    const codec = carnaval().decoders(object => validate(object)).codec(thingMapping);
 
     return codec.decode(json)
     .then(thing => {
@@ -27,7 +27,7 @@ test('validate', t => {
 
 test('validate as promise', t => {
     const json = {name: 'Shoes'};
-    const codec = carnaval().decoders(object => Promise.resolve(object).then(object => validate(object))).codec(ThingMapping);
+    const codec = carnaval().decoders(object => Promise.resolve(object).then(object => validate(object))).codec(thingMapping);
 
     return codec.decode(json)
     .then(thing => {
@@ -37,7 +37,7 @@ test('validate as promise', t => {
 
 test('validate required error', t => {
     const json = {name: null};
-    const codec = carnaval().decoders(object => validate(object)).codec(ThingMapping);
+    const codec = carnaval().decoders(object => validate(object)).codec(thingMapping);
 
     return codec.decode(json)
     .catch(error => {
@@ -47,7 +47,7 @@ test('validate required error', t => {
 
 test('validate typed error', t => {
     const json = {name: 12};
-    const codec = carnaval().decoders(object => validate(object)).codec(ThingMapping);
+    const codec = carnaval().decoders(object => validate(object)).codec(thingMapping);
 
     return codec.decode(json)
     .catch(error => {
@@ -64,11 +64,11 @@ class Box extends Domain {
     }
 }
 
-const BoxMapping = Mapping.pick(Box, 'size', 'thing').mapWith(ThingMapping);
+const boxMapping = new Mapping(Box).select('size', 'thing').mapType(thingMapping);
 
 test('validate deep error', t => {
     const json = {size: 'Medium', thing: null};
-    const codec = carnaval().decoders(object => validate(object)).codec(BoxMapping);
+    const codec = carnaval().decoders(object => validate(object)).codec(boxMapping);
 
     return codec.decode(json)
     .catch(error => {
@@ -85,11 +85,11 @@ class Gift extends Domain {
     }
 }
 
-const GiftMapping = Mapping.pick(Gift, 'size', 'names');
+const giftMapping = new Mapping(Gift).select('size', 'names');
 
 test('validate array', t => {
     const json = {size: 'Medium', names: ['Shoes', 'Shirt']};
-    const codec = carnaval().decoders(object => validate(object)).codec(GiftMapping);
+    const codec = carnaval().decoders(object => validate(object)).codec(giftMapping);
 
     return codec.decode(json).then(gift => {
         t.true(gift instanceof Gift);
@@ -104,7 +104,7 @@ test('validate array', t => {
 
 test('validate array typed error', t => {
     const json = {size: 'Medium', names: ['Shoes', 12]};
-    const codec = carnaval().decoders(object => validate(object)).codec(GiftMapping);
+    const codec = carnaval().decoders(object => validate(object)).codec(giftMapping);
 
     return codec.decode(json)
     .catch(error => {
@@ -114,7 +114,7 @@ test('validate array typed error', t => {
 
 test('validate array condition error', t => {
     const json = {size: 'Medium', names: ['Shoes', 'Shirt', 'Pants']};
-    const codec = carnaval().decoders(object => validate(object)).codec(GiftMapping);
+    const codec = carnaval().decoders(object => validate(object)).codec(giftMapping);
 
     return codec.decode(json)
     .catch(error => {
@@ -135,11 +135,11 @@ class Bookcase extends Domain {
     }
 }
 
-const BookcaseMapping = Mapping.pick(Bookcase, 'size', 'things').mapWith(ThingMapping);
+const bookcaseMapping = new Mapping(Bookcase).select('size', 'things').mapType(thingMapping);
 
 test('validate array deep error', t => {
     const json = {size: 'Medium', things: [{name: 'Shoes'}, {name: 12}]};
-    const codec = carnaval().decoders(object => validate(object)).codec(BookcaseMapping);
+    const codec = carnaval().decoders(object => validate(object)).codec(bookcaseMapping);
 
     return codec.decode(json)
     .catch(error => {

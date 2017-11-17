@@ -15,11 +15,11 @@ class Basic {
     }
 }
 
-const BasicMapping = Mapping.pick(Basic, 'name');
+const basicMapping = new Mapping(Basic).select('name');
 
-test('decode', t => {
+test('decode a class through mapping', t => {
     const json = {name: 'Shoes'};
-    const codec = new Codec(BasicMapping);
+    const codec = new Codec(basicMapping);
 
     return codec.decode(json).then(basic => {
         t.true(basic instanceof Basic);
@@ -27,32 +27,33 @@ test('decode', t => {
     });
 });
 
-test('encode', t => {
+test('encode a class through mapping', t => {
     const basic = new Basic({name: 'Shoes'});
-    const codec = new Codec(BasicMapping);
+    const codec = new Codec(basicMapping);
 
     return codec.encode(basic).then(json => {
         t.is(json.name, basic.name);
     });
 });
 
-const DateMapping = Mapping.pickAll(Date)
-.encodeWith(object => object ? object.getTime() : undefined)
-.decodeWith(json => json ? new Date(json) : undefined);
+const dateCodec = new Codec(Date, {
+    encode: object => object ? object.getTime() : undefined,
+    decode: json => json ? new Date(json) : undefined
+});
 
-test('decode date', t => {
+test('decode a date through codec', t => {
     const timestamp = 1483916400000;
-    const codec = new Codec(DateMapping);
+    const codec = dateCodec;
 
     return codec.decode(timestamp).then(date => {
         t.is(date.getTime(), new Date(timestamp).getTime());
     });
 });
 
-test('encode date', t => {
+test('encode a date through codec', t => {
     const timestamp = 1483916400000;
     const date = new Date(timestamp);
-    const codec = new Codec(DateMapping);
+    const codec = dateCodec;
 
     return codec.encode(date).then(timestamp => {
         t.is(new Date(timestamp).getTime(), date.getTime());
@@ -67,11 +68,11 @@ class Thing extends Domain {
     }
 }
 
-const ThingMapping = Mapping.pick(Thing, 'name');
+const thingMapping = new Mapping(Thing).select('name');
 
-test('decode', t => {
+test('decode a domain class through mapping', t => {
     const json = {name: 'Shoes'};
-    const codec = new Codec(ThingMapping);
+    const codec = new Codec(thingMapping);
 
     return codec.decode(json).then(thing => {
         t.true(thing instanceof Thing);
@@ -79,9 +80,9 @@ test('decode', t => {
     });
 });
 
-test('encode', t => {
+test('encode a domain class through mapping', t => {
     const thing = new Thing({name: 'Shoes'});
-    const codec = new Codec(ThingMapping);
+    const codec = new Codec(thingMapping);
 
     return codec.encode(thing).then(json => {
         t.is(json.name, thing.name);
@@ -97,11 +98,11 @@ class Box extends Domain {
     }
 }
 
-const BoxMapping = Mapping.pick(Box, 'size', 'thing').mapWith(ThingMapping);
+const boxMapping = new Mapping(Box).select('size', 'thing').mapType(thingMapping);
 
-test('decode deep', t => {
+test('decode a deep domain class through mapping', t => {
     const json = {size: 'Medium', thing: {name: 'Shoes'}};
-    const codec = new Codec(BoxMapping);
+    const codec = new Codec(boxMapping);
 
     return codec.decode(json).then(box => {
         t.true(box instanceof Box);
@@ -111,9 +112,9 @@ test('decode deep', t => {
     });
 });
 
-test('encode deep', t => {
+test('encode a deep domain class through mapping', t => {
     const box = new Box({size: 'Medium', thing: new Thing({name: 'Shoes'})});
-    const codec = new Codec(BoxMapping);
+    const codec = new Codec(boxMapping);
 
     return codec.encode(box).then(json => {
         t.is(json.size, box.size);
@@ -130,11 +131,11 @@ class Gift extends Domain {
     }
 }
 
-const GiftMapping = Mapping.pick(Gift, 'size', 'names');
+const giftMapping = new Mapping(Gift).select('size', 'names');
 
-test('decode array', t => {
+test('decode an array through mapping', t => {
     const json = {size: 'Medium', names: ['Shoes', 'Shirt']};
-    const codec = new Codec(GiftMapping);
+    const codec = new Codec(giftMapping);
 
     return codec.decode(json).then(gift => {
         t.true(gift instanceof Gift);
@@ -147,9 +148,9 @@ test('decode array', t => {
     });
 });
 
-test('encode array', t => {
+test('encode an array through mapping', t => {
     const gift = new Gift({size: 'Medium', names: ['Shoes', 'Shirt']});
-    const codec = new Codec(GiftMapping);
+    const codec = new Codec(giftMapping);
 
     return codec.encode(gift).then(json => {
         t.is(json.size, gift.size);
@@ -168,11 +169,11 @@ class Bookcase extends Domain {
     }
 }
 
-const BookcaseMapping = Mapping.pick(Bookcase, 'size', 'things').mapWith(ThingMapping);
+const bookcaseMapping = new Mapping(Bookcase).select('size', 'things').mapType(thingMapping);
 
-test('decode array deep', t => {
+test('decode a domain array through mapping', t => {
     const json = {size: 'Medium', things: [{name: 'Shoes'}, {name: 'Shirt'}]};
-    const codec = new Codec(BookcaseMapping);
+    const codec = new Codec(bookcaseMapping);
 
     return codec.decode(json).then(bookcase => {
         t.true(bookcase instanceof Bookcase);
@@ -185,9 +186,9 @@ test('decode array deep', t => {
     });
 });
 
-test('encode array deep', t => {
+test('encode a domain array through mapping', t => {
     const bookcase = new Bookcase({size: 'Medium', things: [new Thing({name: 'Shoes'}), new Thing({name: 'Shirt'})]});
-    const codec = new Codec(BookcaseMapping);
+    const codec = new Codec(bookcaseMapping);
 
     return codec.encode(bookcase).then(json => {
         t.is(json.size, bookcase.size);
@@ -207,37 +208,37 @@ class Event extends Domain {
     }
 }
 
-const EventPropertyMapping = Mapping.pick(Event, 'date').mapWith({
+const eventPropertyMapping = new Mapping(Event).select('date').mapProperties({
     date: {
         encode: value => value.getTime(),
         decode: value => new Date(value)
     }
 });
 
-test('decode property mapping', t => {
+test('decode a domain mapped property through mapping', t => {
     const json = {date: 1483916400000};
-    const codec = new Codec(EventPropertyMapping);
+    const codec = new Codec(eventPropertyMapping);
 
     return codec.decode(json).then(mixed => {
         t.is(mixed.date.getTime(), new Date('01/09/2017').getTime());
     });
 });
 
-test('encode property mapping', t => {
+test('encode a domain property through mapping', t => {
     const mixed = new Event({date: new Date('01/09/2017')});
-    const codec = new Codec(EventPropertyMapping);
+    const codec = new Codec(eventPropertyMapping);
 
     return codec.encode(mixed).then(json => {
         t.is(json.date, 1483916400000);
     });
 });
 
-const EventReferenceCopyMapping = Mapping.pickAll(Event);
+const eventReferenceCopyMapping = new Mapping(Event).selectAll();
 
-test('decode date as same', t => {
+test('decode a date as reference without a codec', t => {
     const date = new Date(1483916400000);
     const json = {date: date};
-    const codec = new Codec(EventReferenceCopyMapping);
+    const codec = new Codec(eventReferenceCopyMapping);
 
     return codec.decode(json).then(transform => {
         t.is(transform.date.getTime(), date.getTime());
@@ -245,10 +246,10 @@ test('decode date as same', t => {
     });
 });
 
-test('encode date as same', t => {
+test('encode a date as reference without a codec', t => {
     const date = new Date(1483916400000);
     const transform = new Event({date: date});
-    const codec = new Codec(EventReferenceCopyMapping);
+    const codec = new Codec(eventReferenceCopyMapping);
 
     return codec.encode(transform).then(json => {
         t.is(json.date.getTime(), date.getTime());
@@ -265,23 +266,24 @@ class Custom extends Domain {
     }
 }
 
-const CustomMapping = Mapping.pick(Custom)
-.encodeWith(object => {
-    return {
-        time: object.date.getTime(),
-        thing: ThingMapping
-    };
-})
-.decodeWith(json => {
-    return new Custom({
-        date: new Date(json.time),
-        thing: ThingMapping
-    });
+const CustomCodec = new Codec(Custom, {
+    encode: object => {
+        return {
+            time: object.date.getTime(),
+            thing: thingMapping
+        };
+    },
+    decode: json => {
+        return new Custom({
+            date: new Date(json.time),
+            thing: thingMapping
+        });
+    }
 });
 
-test('decode custom', t => {
+test('decode a domain class through mapping codec with embedded mapping', t => {
     const json = {time: 1483916400000, thing: {name: 'Shoes'}};
-    const codec = new Codec(CustomMapping);
+    const codec = CustomCodec;
 
     return codec.decode(json).then(custom => {
         t.is(custom.date.getTime(), new Date('01/09/2017').getTime());
@@ -290,9 +292,9 @@ test('decode custom', t => {
     });
 });
 
-test('encode custom', t => {
+test('encode a domain class through mapping codec with embedded mapping', t => {
     const custom = new Custom({date: new Date('01/09/2017'), thing: new Thing({name: 'Shoes'})});
-    const codec = new Codec(CustomMapping);
+    const codec = CustomCodec;
 
     return codec.encode(custom).then(json => {
         t.is(json.time, 1483916400000);
@@ -300,9 +302,9 @@ test('encode custom', t => {
     });
 });
 
-const EventMapping = Mapping.pickAll(Event).mapWith(DateMapping);
+const EventMapping = new Mapping(Event).selectAll().mapType(dateCodec);
 
-test('decode type mappings', t => {
+test('decode a domain class though mapping with embedded codec', t => {
     const json = {date: 1483916400000};
     const codec = new Codec(EventMapping);
 
@@ -312,7 +314,7 @@ test('decode type mappings', t => {
     });
 });
 
-test('encode type mappings', t => {
+test('encode a domain class though mapping with embedded codec', t => {
     const event = new Event({date: new Date(1483916400000)});
     const codec = new Codec(EventMapping);
 
@@ -322,7 +324,7 @@ test('encode type mappings', t => {
     });
 });
 
-test('encode type mappings empty', t => {
+test('encode a domain class though mapping with embedded codec (empty value)', t => {
     const event = new Event();
     const codec = new Codec(EventMapping);
 
@@ -339,12 +341,12 @@ class EmbeddedEvent extends Domain {
     }
 }
 
-const EmbeddedEventMapping = Mapping.pickAll(EmbeddedEvent)
-.mapWith(Mapping.pickAll(Event), DateMapping);
+const embeddedEventMapping = new Mapping(EmbeddedEvent).selectAll()
+.mapType(new Mapping(Event).selectAll(), dateCodec);
 
-test('decode deep with mappings', t => {
+test('decode a deep domain class though mapping with embedded codec', t => {
     const json = {event: {date: 1483916400000}};
-    const codec = new Codec(EmbeddedEventMapping);
+    const codec = new Codec(embeddedEventMapping);
 
     return codec.decode(json).then(deep => {
         t.true(deep.event instanceof Event);
@@ -352,12 +354,50 @@ test('decode deep with mappings', t => {
     });
 });
 
-test('encode deep with mappings', t => {
+test('encode a deep domain class though mapping with embedded codec', t => {
     const deep = new EmbeddedEvent({event: new Event({date: new Date(1483916400000)})});
-    const codec = new Codec(EmbeddedEventMapping);
+    const codec = new Codec(embeddedEventMapping);
 
     return codec.encode(deep).then(json => {
         t.is(json.event.date, 1483916400000);
         t.is(new Date(json.event.date).getTime(), deep.event.date.getTime());
+    });
+});
+
+class Subscription extends Domain {
+    get props() {
+        return {
+            size: String,
+            dates: [Date]
+        };
+    }
+}
+
+const subscriptionMapping = new Mapping(Subscription).select('size', 'dates').mapType(dateCodec);
+
+test('decode an array through mapping with embedded codec', t => {
+    const json = {size: 'Medium', dates: [1483916400000, 1484002800000]};
+    const codec = new Codec(subscriptionMapping);
+
+    return codec.decode(json).then(subscription => {
+        t.true(subscription instanceof Subscription);
+        t.is(subscription.size, json.size);
+        t.true(subscription.dates instanceof Array);
+        t.is(subscription.dates[0].constructor, Date);
+        t.is(subscription.dates[1].constructor, Date);
+        t.is(subscription.dates[0].getTime(), new Date(json.dates[0]).getTime());
+        t.is(subscription.dates[1].getTime(), new Date(json.dates[1]).getTime());
+    });
+});
+
+test('encode an array through mapping with embedded codec', t => {
+    const subscription = new Subscription({size: 'Medium', dates: [new Date(1483916400000), new Date(1484002800000)]});
+    const codec = new Codec(subscriptionMapping);
+
+    return codec.encode(subscription).then(json => {
+        t.is(json.size, subscription.size);
+        t.true(subscription.dates instanceof Array);
+        t.is(json.dates[0], subscription.dates[0].getTime());
+        t.is(json.dates[1], subscription.dates[1].getTime());
     });
 });

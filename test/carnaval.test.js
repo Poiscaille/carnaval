@@ -12,30 +12,23 @@ class Thing extends Domain {
     }
 }
 
-const ThingMapping = Mapping.pick(Thing)
-.encodeWith((object, providers) => {
-    return {
-        name: providers.upperCase(object.name)
-    };
-})
-.decodeWith((json, providers) => {
-    return Promise.resolve()
-    .then(() => {
-        return new Thing({
-            name: providers.upperCase(json.name)
-        });
-    });
-});
-
 test('decode with providers', t => {
     const json = {name: 'Shoes'};
-    const codec = carnaval()
-    .providers({
+    const codec = carnaval().providers({
         upperCase: value => {
             return value.toUpperCase();
         }
     })
-    .codec(ThingMapping);
+    .codec(Thing, {
+        decode: (json, providers) => {
+            return Promise.resolve()
+            .then(() => {
+                return new Thing({
+                    name: providers.upperCase(json.name)
+                });
+            });
+        }
+    });
 
     return codec.decode(json).then(thing => {
         t.true(thing instanceof Thing);
@@ -45,13 +38,18 @@ test('decode with providers', t => {
 
 test('encode with providers', t => {
     const thing = new Thing({name: 'Shoes'});
-    const codec = carnaval()
-    .providers({
+    const codec = carnaval().providers({
         upperCase: value => {
             return value.toUpperCase();
         }
     })
-    .codec(ThingMapping);
+    .codec(Thing, {
+        encode: (object, providers) => {
+            return {
+                name: providers.upperCase(object.name)
+            };
+        }
+    });
 
     return codec.encode(thing).then(json => {
         t.is(json.name, thing.name.toUpperCase());
@@ -59,15 +57,13 @@ test('encode with providers', t => {
 });
 
 test('freeze with providers', t => {
-    const ThingMapping = Mapping.pick(Thing, 'name');
-
     const json = {name: 'Shoes'};
     const codec = carnaval()
     .providers({
         freeze: o => Promise.resolve(Object.freeze(o))
     })
     .decoders((object, providers) => providers.freeze(object))
-    .codec(ThingMapping);
+    .codec(new Mapping(Thing).select('name'));
 
     return codec.decode(json).then(thing => {
         const error = t.throws(() => {
