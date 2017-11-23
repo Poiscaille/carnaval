@@ -2,7 +2,6 @@ const test = require('ava');
 const Promise = require('bluebird');
 
 const Domain = require('../lib/domain');
-const Mapping = require('../lib/mapping');
 const carnaval = require('../lib/carnaval');
 const validate = require('../lib/validator');
 
@@ -64,11 +63,11 @@ const repository = {
 class Thing extends Domain {
     get props() {
         return {
-            id: Number,
-            name: String,
-            price: Number,
-            company: String,
-            creation: Date
+            id: 'number',
+            name: 'string',
+            price: 'number',
+            company: 'string',
+            creation: 'date'
         };
     }
     get options() {
@@ -82,20 +81,15 @@ class Thing extends Domain {
     }
 }
 
-const thingViewMapping = new Mapping(Thing).select('id', 'name', 'price', 'creation');
-
-const thingRepositoryMapping = new Mapping(Thing).selectAll().mapProperties({
-    creation: {
-        encode: value => !value ? '' : value.toISOString().slice(0, 10),
-        decode: value => !value ? null : new Date(value)
-    }
+const repositoryCodec = carnaval().codecForClass(Thing).onProp('creation', {
+    encode: value => !value ? '' : value.toISOString().slice(0, 10),
+    decode: value => !value ? null : new Date(value)
 });
 
 test('get /route', t => {
     const user = {company: 'Green'};
 
-    const viewCodec = carnaval().codec(thingViewMapping);
-    const repositoryCodec = carnaval().codec(thingRepositoryMapping);
+    const viewCodec = carnaval().codecForClass(Thing).props('id', 'name', 'price', 'creation');
 
     return repository.shield(user).find()
     .then(datas => repositoryCodec.decode(datas))
@@ -116,8 +110,8 @@ test('get /route/:id', t => {
         json.formattedPrice = ((json.price || 0) / 100).toFixed(2) + '€';
     };
 
-    const viewCodec = carnaval().encoders(json => formattedPrice(json)).codec(thingViewMapping);
-    const repositoryCodec = carnaval().codec(thingRepositoryMapping);
+    const viewCodec = carnaval().encoders(json => formattedPrice(json))
+    .codecForClass(Thing).props('id', 'name', 'price', 'creation');
 
     return repository.shield(user).findById(id)
     .then(data => repositoryCodec.decode(data))
@@ -137,8 +131,8 @@ test('post /route', t => {
 
     const body = {name: '319 Men', price: 490};
 
-    const viewCodec = carnaval().decoders(object => object.setCompany(user.company)).codec(thingViewMapping);
-    const repositoryCodec = carnaval().codec(thingRepositoryMapping);
+    const viewCodec = carnaval().decoders(object => object.setCompany(user.company))
+    .codecForClass(Thing).props('id', 'name', 'price', 'creation');
 
     return viewCodec.decode(body)
     .then(thing => repositoryCodec.encode(thing))
@@ -159,8 +153,8 @@ test('put /route/:id', t => {
 
     const body = {id: 3, name: 'Alamo Military Collectibles', price: 490};
 
-    const viewCodec = carnaval().decoders(object => object.setCompany(user.company)).codec(thingViewMapping);
-    const repositoryCodec = carnaval().codec(thingRepositoryMapping);
+    const viewCodec = carnaval().decoders(object => object.setCompany(user.company))
+    .codecForClass(Thing).props('id', 'name', 'price', 'creation');
 
     const repositoryShield = repository.shield(user);
 
@@ -184,8 +178,7 @@ test('delete /route/:id', t => {
 
     const id = 4;
 
-    const viewCodec = carnaval().codec(thingViewMapping);
-    const repositoryCodec = carnaval().codec(thingRepositoryMapping);
+    const viewCodec = carnaval().codecForClass(Thing).props('id', 'name', 'price', 'creation');
 
     const repositoryShield = repository.shield(user);
 

@@ -6,7 +6,7 @@ const validate = require('../lib/validator');
 class Thing extends Domain {
     get props() {
         return {
-            name: String
+            name: 'string'
         };
     }
 }
@@ -39,7 +39,7 @@ test('domain assign', t => {
 class FrozenThing extends Domain {
     get props() {
         return {
-            name: String
+            name: 'string'
         };
     }
     get options() {
@@ -85,7 +85,7 @@ test('domain frozen assign', t => {
 class FrozenValidatedThing extends Domain {
     get props() {
         return {
-            name: {type: String, rules: {required: true}}
+            name: {type: 'string', rules: {required: true}}
         };
     }
     get options() {

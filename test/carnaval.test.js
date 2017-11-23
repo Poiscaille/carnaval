@@ -1,13 +1,12 @@
 const test = require('ava');
 
-const Domain = require('../lib/domain');
-const Mapping = require('../lib/mapping');
 const carnaval = require('../lib/carnaval');
+const Domain = carnaval.Domain;
 
 class Thing extends Domain {
     get props() {
         return {
-            name: String
+            name: 'string'
         };
     }
 }
@@ -19,7 +18,7 @@ test('decode with providers', t => {
             return value.toUpperCase();
         }
     })
-    .codec(Thing, {
+    .codecCustom({
         decode: (json, providers) => {
             return Promise.resolve()
             .then(() => {
@@ -43,7 +42,7 @@ test('encode with providers', t => {
             return value.toUpperCase();
         }
     })
-    .codec(Thing, {
+    .codecCustom({
         encode: (object, providers) => {
             return {
                 name: providers.upperCase(object.name)
@@ -63,7 +62,8 @@ test('freeze with providers', t => {
         freeze: o => Promise.resolve(Object.freeze(o))
     })
     .decoders((object, providers) => providers.freeze(object))
-    .codec(new Mapping(Thing).select('name'));
+    .codecForClass(Thing)
+    .props('name');
 
     return codec.decode(json).then(thing => {
         const error = t.throws(() => {

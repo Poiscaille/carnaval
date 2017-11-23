@@ -1,23 +1,21 @@
 const test = require('ava');
 
 const Domain = require('../lib/domain');
-const Mapping = require('../lib/mapping');
 const validate = require('../lib/validator-ajv');
 const carnaval = require('../lib/carnaval');
 
 class Thing extends Domain {
     get props() {
         return {
-            name: {type: String, rules: {required: true}}
+            name: {type: 'string', rules: {required: true}}
         };
     }
 }
 
-const thingMapping = new Mapping(Thing).select('name');
-
 test('validate', t => {
     const json = {name: 'Shoes'};
-    const codec = carnaval().decoders(object => validate(object)).codec(thingMapping);
+    const codec = carnaval().decoders(object => validate(object))
+    .codecForClass(Thing).props('name');
 
     return codec.decode(json)
     .then(thing => {
@@ -27,7 +25,8 @@ test('validate', t => {
 
 test('validate as promise', t => {
     const json = {name: 'Shoes'};
-    const codec = carnaval().decoders(object => Promise.resolve(object).then(object => validate(object))).codec(thingMapping);
+    const codec = carnaval().decoders(object => Promise.resolve(object).then(object => validate(object)))
+    .codecForClass(Thing).props('name');
 
     return codec.decode(json)
     .then(thing => {
@@ -37,7 +36,8 @@ test('validate as promise', t => {
 
 test('validate required error', t => {
     const json = {name: null};
-    const codec = carnaval().decoders(object => validate(object)).codec(thingMapping);
+    const codec = carnaval().decoders(object => validate(object))
+    .codecForClass(Thing).props('name');
 
     return codec.decode(json)
     .catch(error => {
@@ -47,7 +47,8 @@ test('validate required error', t => {
 
 test('validate typed error', t => {
     const json = {name: 12};
-    const codec = carnaval().decoders(object => validate(object)).codec(thingMapping);
+    const codec = carnaval().decoders(object => validate(object))
+    .codecForClass(Thing).props('name');
 
     return codec.decode(json)
     .catch(error => {
@@ -58,17 +59,17 @@ test('validate typed error', t => {
 class Box extends Domain {
     get props() {
         return {
-            size: {type: String, rules: {required: true}},
-            thing: Thing
+            size: {type: 'string', rules: {required: true}},
+            thing: {type: 'thing', rules: {domain: Thing}}
         };
     }
 }
 
-const boxMapping = new Mapping(Box).select('size', 'thing').mapType(thingMapping);
-
 test('validate deep error', t => {
     const json = {size: 'Medium', thing: null};
-    const codec = carnaval().decoders(object => validate(object)).codec(boxMapping);
+    const codec = carnaval().decoders(object => validate(object))
+    .codecForClass(Box).props('size', 'thing')
+    .onType('thing', carnaval.Codec.forClass(Thing));
 
     return codec.decode(json)
     .catch(error => {
@@ -79,17 +80,16 @@ test('validate deep error', t => {
 class Gift extends Domain {
     get props() {
         return {
-            size: String,
-            names: {type: [String], rules: {maxItems: 2}}
+            size: 'string',
+            names: {type: ['string'], rules: {maxItems: 2}}
         };
     }
 }
 
-const giftMapping = new Mapping(Gift).select('size', 'names');
-
 test('validate array', t => {
     const json = {size: 'Medium', names: ['Shoes', 'Shirt']};
-    const codec = carnaval().decoders(object => validate(object)).codec(giftMapping);
+    const codec = carnaval().decoders(object => validate(object))
+    .codecForClass(Gift).props('size', 'names');
 
     return codec.decode(json).then(gift => {
         t.true(gift instanceof Gift);
@@ -104,7 +104,8 @@ test('validate array', t => {
 
 test('validate array typed error', t => {
     const json = {size: 'Medium', names: ['Shoes', 12]};
-    const codec = carnaval().decoders(object => validate(object)).codec(giftMapping);
+    const codec = carnaval().decoders(object => validate(object))
+    .codecForClass(Gift).props('size', 'names');
 
     return codec.decode(json)
     .catch(error => {
@@ -114,7 +115,8 @@ test('validate array typed error', t => {
 
 test('validate array condition error', t => {
     const json = {size: 'Medium', names: ['Shoes', 'Shirt', 'Pants']};
-    const codec = carnaval().decoders(object => validate(object)).codec(giftMapping);
+    const codec = carnaval().decoders(object => validate(object))
+    .codecForClass(Gift).props('size', 'names');
 
     return codec.decode(json)
     .catch(error => {
@@ -125,21 +127,22 @@ test('validate array condition error', t => {
 class Bookcase extends Domain {
     get props() {
         return {
-            size: String,
-            things: {type: [Thing], rules: {
+            size: 'string',
+            things: {type: ['thing'], rules: {
+                domain: Thing,
                 props: {
-                    name: {type: String, rules: {required: true}}
+                    name: {type: 'string', rules: {required: true}}
                 }
             }}
         };
     }
 }
 
-const bookcaseMapping = new Mapping(Bookcase).select('size', 'things').mapType(thingMapping);
-
 test('validate array deep error', t => {
     const json = {size: 'Medium', things: [{name: 'Shoes'}, {name: 12}]};
-    const codec = carnaval().decoders(object => validate(object)).codec(bookcaseMapping);
+    const codec = carnaval().decoders(object => validate(object))
+    .codecForClass(Bookcase).props('size', 'things')
+    .onType(carnaval.Codec.forClass(Thing));
 
     return codec.decode(json)
     .catch(error => {
