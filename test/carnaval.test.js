@@ -1,6 +1,6 @@
 const test = require('ava');
 
-const carnaval = require('../lib/carnaval');
+const carnaval = require('../');
 const Domain = carnaval.Domain;
 
 class Thing extends Domain {

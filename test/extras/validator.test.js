@@ -1,8 +1,8 @@
 const test = require('ava');
 
-const Domain = require('../lib/domain');
-const validate = require('../lib/validator');
-const carnaval = require('../lib/carnaval');
+const validate = require('./validator');
+const carnaval = require('../../');
+const Domain = carnaval.Domain;
 
 const deepFreeze = o => {
     Object.freeze(o);

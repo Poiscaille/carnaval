@@ -1,8 +1,8 @@
 const test = require('ava');
 
-const Domain = require('../lib/domain');
-const validate = require('../lib/validator-ajv');
-const carnaval = require('../lib/carnaval');
+const validate = require('./validator-ajv');
+const carnaval = require('../../');
+const Domain = carnaval.Domain;
 
 class Thing extends Domain {
     get props() {

@@ -1,7 +1,7 @@
 const test = require('ava');
 
 const Domain = require('../lib/domain');
-const validate = require('../lib/validator');
+const validate = require('./extras/validator');
 
 class Thing extends Domain {
     get props() {

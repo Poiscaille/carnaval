@@ -1,9 +1,9 @@
 const test = require('ava');
 const Promise = require('bluebird');
 
-const Domain = require('../lib/domain');
-const carnaval = require('../lib/carnaval');
-const validate = require('../lib/validator');
+const carnaval = require('../');
+const Domain = carnaval.Domain;
+const validate = require('./extras/validator');
 
 const repository = {
     store: [

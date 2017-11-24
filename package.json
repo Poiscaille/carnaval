@@ -10,12 +10,12 @@
         "lint": "eslint lib test"
     },
     "license": "Apache-2.0",
-    "dependencies": {
-        "ajv": "5.2.2",
-        "bluebird": "3.5.0"
-    },
     "devDependencies": {
-        "ava": "0.22.0",
-        "eslint": "4.6.1"
+        "ava": "0.23.x",
+        "eslint": "4.11.x",
+        "ajv": "5.4.x"
+    },
+    "ava": {
+        "files": ["**/*.test.js"]
     }
 }
