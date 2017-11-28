@@ -89,7 +89,7 @@ const repositoryCodec = carnaval().codecForClass(Thing).onProp('creation', {
 test('get /route', t => {
     const user = {company: 'Green'};
 
-    const viewCodec = carnaval().codecForClass(Thing).props('id', 'name', 'price', 'creation');
+    const viewCodec = carnaval().codecForClass(Thing).pick('id', 'name', 'price', 'creation');
 
     return repository.shield(user).find()
     .then(datas => repositoryCodec.decode(datas))
@@ -110,8 +110,8 @@ test('get /route/:id', t => {
         json.formattedPrice = ((json.price || 0) / 100).toFixed(2) + '€';
     };
 
-    const viewCodec = carnaval().encoders(json => formattedPrice(json))
-    .codecForClass(Thing).props('id', 'name', 'price', 'creation');
+    const viewCodec = carnaval().afterEncode(json => formattedPrice(json))
+    .codecForClass(Thing).pick('id', 'name', 'price', 'creation');
 
     return repository.shield(user).findById(id)
     .then(data => repositoryCodec.decode(data))
@@ -131,8 +131,8 @@ test('post /route', t => {
 
     const body = {name: '319 Men', price: 490};
 
-    const viewCodec = carnaval().decoders(object => object.setCompany(user.company))
-    .codecForClass(Thing).props('id', 'name', 'price', 'creation');
+    const viewCodec = carnaval().afterDecode(object => object.setCompany(user.company))
+    .codecForClass(Thing).pick('id', 'name', 'price', 'creation');
 
     return viewCodec.decode(body)
     .then(thing => repositoryCodec.encode(thing))
@@ -153,8 +153,8 @@ test('put /route/:id', t => {
 
     const body = {id: 3, name: 'Alamo Military Collectibles', price: 490};
 
-    const viewCodec = carnaval().decoders(object => object.setCompany(user.company))
-    .codecForClass(Thing).props('id', 'name', 'price', 'creation');
+    const viewCodec = carnaval().afterDecode(object => object.setCompany(user.company))
+    .codecForClass(Thing).pick('id', 'name', 'price', 'creation');
 
     const repositoryShield = repository.shield(user);
 
@@ -178,7 +178,7 @@ test('delete /route/:id', t => {
 
     const id = 4;
 
-    const viewCodec = carnaval().codecForClass(Thing).props('id', 'name', 'price', 'creation');
+    const viewCodec = carnaval().codecForClass(Thing).pick('id', 'name', 'price', 'creation');
 
     const repositoryShield = repository.shield(user);
 

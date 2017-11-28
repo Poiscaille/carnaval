@@ -92,12 +92,12 @@ class Box extends Domain {
     get props() {
         return {
             size: 'string',
-            thing: ':thing'
+            thing: 'c:thing'
         };
     }
 }
 
-const boxCodec = Codec.forClass(Box).props('size', 'thing').onType(':thing', thingCodec);
+const boxCodec = Codec.forClass(Box).pick('size', 'thing').onType('c:thing', thingCodec);
 
 test('decode a deep domain class through mapping', t => {
     const json = {size: 'Medium', thing: {name: 'Shoes'}};
@@ -130,7 +130,7 @@ class Gift extends Domain {
     }
 }
 
-const giftCodec = Codec.forClass(Gift).props('size', 'names');
+const giftCodec = Codec.forClass(Gift).pick('size', 'names');
 
 test('decode an array through mapping', t => {
     const json = {size: 'Medium', names: ['Shoes', 'Shirt']};
@@ -163,12 +163,12 @@ class Bookcase extends Domain {
     get props() {
         return {
             size: 'string',
-            things: [':thing']
+            things: ['c:thing']
         };
     }
 }
 
-const bookcaseCodec = Codec.forClass(Bookcase).props('size', 'things').onType(':thing', thingCodec);
+const bookcaseCodec = Codec.forClass(Bookcase).pick('size', 'things').onType('c:thing', thingCodec);
 
 test('decode a domain array through mapping', t => {
     const json = {size: 'Medium', things: [{name: 'Shoes'}, {name: 'Shirt'}]};
@@ -202,12 +202,12 @@ test('encode a domain array through mapping', t => {
 class Event extends Domain {
     get props() {
         return {
-            date: ':date'
+            date: 'c:date'
         };
     }
 }
 
-const eventPropertyCodec = Codec.forClass(Event).props('date').onProp('date', {
+const eventPropertyCodec = Codec.forClass(Event).pick('date').onProp('date', {
     encode: value => value.getTime(),
     decode: value => new Date(value)
 });
@@ -257,8 +257,8 @@ test('encode a date as reference without a codec', t => {
 class Custom extends Domain {
     get props() {
         return {
-            date: ':date',
-            thing: ':thing'
+            date: 'c:date',
+            thing: 'c:thing'
         };
     }
 }
@@ -299,7 +299,7 @@ test('encode a domain class through mapping codec with embedded mapping', t => {
     });
 });
 
-const eventCodec = Codec.forClass(Event).onType(':date', dateCodec);
+const eventCodec = Codec.forClass(Event).onType('c:date', dateCodec);
 
 test('decode a domain class though mapping with embedded codec', t => {
     const json = {date: 1483916400000};
@@ -333,14 +333,14 @@ test('encode a domain class though mapping with embedded codec (empty value)', t
 class EmbeddedEvent extends Domain {
     get props() {
         return {
-            event: ':event'
+            event: 'c:event'
         };
     }
 }
 
 const embeddedEventCodec = Codec.forClass(EmbeddedEvent)
-.onType(':event', Codec.forClass(Event))
-.onType(':date', dateCodec);
+.onType('c:event', Codec.forClass(Event))
+.onType('c:date', dateCodec);
 
 test('decode a deep domain class though mapping with embedded codec', t => {
     const json = {event: {date: 1483916400000}};
@@ -366,12 +366,12 @@ class Subscription extends Domain {
     get props() {
         return {
             size: 'string',
-            dates: [':date']
+            dates: ['c:date']
         };
     }
 }
 
-const subscriptionCodec = Codec.forClass(Subscription).props('size', 'dates').onType(':date', dateCodec);
+const subscriptionCodec = Codec.forClass(Subscription).pick('size', 'dates').onType('c:date', dateCodec);
 
 test('decode an array through mapping with embedded codec', t => {
     const json = {size: 'Medium', dates: [1483916400000, 1484002800000]};

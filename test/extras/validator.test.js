@@ -28,7 +28,7 @@ class Thing extends Domain {
 
 test('decode', t => {
     const json = {name: 'Shoes'};
-    const codec = carnaval().codecForClass(Thing).props('name');
+    const codec = carnaval().codecForClass(Thing).pick('name');
 
     return codec.decode(json).then(thing => {
         t.true(thing instanceof Thing);
@@ -38,7 +38,7 @@ test('decode', t => {
 
 test('freeze', t => {
     const json = {name: 'Shoes'};
-    const codec = carnaval().decoders(object => Object.freeze(object)).codecForClass(Thing).props('name');
+    const codec = carnaval().afterDecode(object => Object.freeze(object)).codecForClass(Thing).pick('name');
 
     return codec.decode(json).then(thing => {
         const error = t.throws(() => {
@@ -50,7 +50,7 @@ test('freeze', t => {
 
 test('validate', t => {
     const json = {name: 'Shoes'};
-    const codec = carnaval().decoders(object => validate(object)).codecForClass(Thing).props('name');
+    const codec = carnaval().afterDecode(object => validate(object)).codecForClass(Thing).pick('name');
 
     return codec.decode(json).then(thing => {
         t.is(thing.name, json.name);
@@ -59,7 +59,7 @@ test('validate', t => {
 
 test('validate required error', t => {
     const json = {name: null};
-    const codec = carnaval().decoders(object => validate(object)).codecForClass(Thing).props('name');
+    const codec = carnaval().afterDecode(object => validate(object)).codecForClass(Thing).pick('name');
 
     return codec.decode(json)
     .catch(error => {
@@ -83,8 +83,8 @@ class Box extends Domain {
 
 test('freeze deep', t => {
     const json = {size: 'Medium', thing: {name: 'Shoes'}};
-    const codec = carnaval().decoders(object => deepFreeze(object))
-    .codecForClass(Box).props('size', 'thing')
+    const codec = carnaval().afterDecode(object => deepFreeze(object))
+    .codecForClass(Box).pick('size', 'thing')
     .onType('thing', carnaval.Codec.forClass(Thing));
 
     return codec.decode(json).then(box => {
@@ -97,8 +97,8 @@ test('freeze deep', t => {
 
 test('validate deep error', t => {
     const json = {size: 'Medium', thing: null};
-    const codec = carnaval().decoders(object => validate(object))
-    .codecForClass(Box).props('size', 'thing')
+    const codec = carnaval().afterDecode(object => validate(object))
+    .codecForClass(Box).pick('size', 'thing')
     .onType('thing', carnaval.Codec.forClass(Thing));
 
     return codec.decode(json)
@@ -118,7 +118,7 @@ class Gift extends Domain {
 
 test('validate array', t => {
     const json = {size: 'Medium', names: ['Shoes', 'Shirt']};
-    const codec = carnaval().decoders(object => validate(object)).codecForClass(Gift).props('size', 'names');
+    const codec = carnaval().afterDecode(object => validate(object)).codecForClass(Gift).pick('size', 'names');
 
     return codec.decode(json).then(gift => {
         t.true(gift instanceof Gift);

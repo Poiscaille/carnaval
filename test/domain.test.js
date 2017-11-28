@@ -36,7 +36,7 @@ test('domain assign', t => {
     t.is(thing.name, name);
 });
 
-class FrozenThing extends Domain {
+class ImmutableThing extends Domain {
     get props() {
         return {
             name: 'string'
@@ -44,32 +44,32 @@ class FrozenThing extends Domain {
     }
     get options() {
         return {
-            frozen: true
+            immutable: true
         };
     }
 }
 
-test('domain frozen creation', t => {
+test('domain immutable creation', t => {
     const name = 'Kidstown';
-    const thing = new FrozenThing({name});
+    const thing = new ImmutableThing({name});
 
     t.is(thing.name, name);
 });
 
-test('domain frozen update', t => {
+test('domain immutable update', t => {
     const name = 'Foundry Inc';
-    const thing = new FrozenThing({name: 'Kidstown'});
+    const thing = new ImmutableThing({name: 'Kidstown'});
 
     const error = t.throws(() => {
         thing.name = name;
     });
-    t.is(error.message, 'Cannot assign to read only property \'name\' of object \'#<FrozenThing>\'');
+    t.is(error.message, 'Cannot assign to read only property \'name\' of object \'#<ImmutableThing>\'');
 });
 
-test('domain frozen assign', t => {
+test('domain immutable assign', t => {
     const before = 'Kidstown';
     const after = 'Foundry Inc';
-    const thing = new FrozenThing({name: before});
+    const thing = new ImmutableThing({name: before});
 
     const assigned = thing.assign({name: after});
 
@@ -79,10 +79,10 @@ test('domain frozen assign', t => {
     const error = t.throws(() => {
         assigned.name = before;
     });
-    t.is(error.message, 'Cannot assign to read only property \'name\' of object \'#<FrozenThing>\'');
+    t.is(error.message, 'Cannot assign to read only property \'name\' of object \'#<ImmutableThing>\'');
 });
 
-class FrozenValidatedThing extends Domain {
+class ImmutableValidatedThing extends Domain {
     get props() {
         return {
             name: {type: 'string', rules: {required: true}}
@@ -90,40 +90,40 @@ class FrozenValidatedThing extends Domain {
     }
     get options() {
         return {
-            frozen: true,
+            immutable: true,
             validate: validate
         };
     }
 }
 
-test('domain frozen valid creation', t => {
+test('domain immutable valid creation', t => {
     const name = 'Kidstown';
-    const thing = new FrozenValidatedThing({name});
+    const thing = new ImmutableValidatedThing({name});
 
     t.is(thing.name, name);
 });
 
-test('domain frozen invalid creation', t => {
+test('domain immutable invalid creation', t => {
     const error = t.throws(() => {
-        const thing = new FrozenValidatedThing(); // eslint-disable-line no-unused-vars
+        const thing = new ImmutableValidatedThing(); // eslint-disable-line no-unused-vars
     });
     t.is(error.message, 'name is required');
 });
 
-test('domain frozen valid update', t => {
+test('domain immutable valid update', t => {
     const before = 'Kidstown';
     const after = 'Foundry Inc';
-    const thing = new FrozenValidatedThing({name: before});
+    const thing = new ImmutableValidatedThing({name: before});
 
     const assigned = thing.assign({name: after});
 
     t.is(assigned.name, after);
 });
 
-test('domain frozen invalid update', t => {
+test('domain immutable invalid update', t => {
     const before = 'Kidstown';
     const after = null;
-    const thing = new FrozenValidatedThing({name: before});
+    const thing = new ImmutableValidatedThing({name: before});
 
     const error = t.throws(() => {
         const assigned = thing.assign({name: after}); // eslint-disable-line no-unused-vars

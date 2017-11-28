@@ -10,6 +10,9 @@
         "lint": "eslint lib test"
     },
     "license": "Apache-2.0",
+    "engines": {
+        "node": ">=6.0.0"
+    },
     "devDependencies": {
         "ava": "0.23.x",
         "eslint": "4.11.x",

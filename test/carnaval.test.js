@@ -61,9 +61,9 @@ test('freeze with providers', t => {
     .providers({
         freeze: o => Promise.resolve(Object.freeze(o))
     })
-    .decoders((object, providers) => providers.freeze(object))
+    .afterDecode((object, providers) => providers.freeze(object))
     .codecForClass(Thing)
-    .props('name');
+    .pick('name');
 
     return codec.decode(json).then(thing => {
         const error = t.throws(() => {
