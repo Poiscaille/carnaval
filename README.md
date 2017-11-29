@@ -209,4 +209,4 @@ friend = friend.birthday();
 
 A `validate` method can be given as an `options` attributes to validate every class instance before creation. If validation and immutability are configured, validation is done first.
 
-With validation and immutability, and object is always valid, because each of its update is validated (_if validation is done solely with a middleware, is leave the object updates invalidated_).
+With validation and immutability, an object is always valid, because each of its update is validated (_if validation is done solely with a middleware, it leaves the object updates invalidated_).
