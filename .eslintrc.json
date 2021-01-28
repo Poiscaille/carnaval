@@ -16,7 +16,7 @@
             "error",
             { "destructuring": "any", "ignoreReadBeforeAssign": false }
         ],
-        "max-len": ["warn", 160],
+        "max-len": ["warn", 200],
         "quotes": ["warn", "single", {"allowTemplateLiterals": true}],
         "require-jsdoc": "off",
         "valid-jsdoc": "off",
