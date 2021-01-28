@@ -59,6 +59,27 @@ test('encode a date through codec', t => {
     });
 });
 
+const renamingCodec = Codec.forClass(Basic).pick({prop: 'name', mapped: 'firstName'});
+
+test('decode a class through mapping & renaming', t => {
+    const json = {firstName: 'Shoes'};
+    const codec = renamingCodec;
+
+    return codec.decode(json).then(basic => {
+        t.true(basic instanceof Basic);
+        t.is(basic.name, json.firstName);
+    });
+});
+
+test('encode a class through mapping & renaming', t => {
+    const basic = new Basic({name: 'Shoes'});
+    const codec = renamingCodec;
+
+    return codec.encode(basic).then(json => {
+        t.is(json.firstName, basic.name);
+    });
+});
+
 class Thing extends Domain {
     get props() {
         return {

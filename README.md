@@ -78,6 +78,17 @@ codec.decode(1483916400000).then(date => { /* new Date(1483916400000) */ });
 codec.encode(new Date(1483916400000)).then(timestamp => { /* 1483916400000 */ });
 ```
 
+**Renaming properties**
+
+A codec can rename some `props` of its target class.
+
+```javascript
+const codec = carnaval().codecForClass(Friend).pick({prop: 'name', mapped: 'firstName'});
+
+codec.decode({firstName: 'Joe', age: 27}).then(friend => { /* new Friend({name: 'Joe'}) */ });
+codec.encode(new Friend({name: 'Joe', age: 27})).then(json => { /* {firstName: 'Joe'} */ });
+```
+
 **Deep properties and arrays**
 
 Sub objects can be handled with sub codecs. A codec may be associated to a property type with `onType` to encode / decode (_recursively_) every property of that type (_ex. `'c:friend'`_). This type can be named in any way, a `c:` prefix can be used  to differentiate types from properties.
