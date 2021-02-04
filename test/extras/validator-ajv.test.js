@@ -47,12 +47,22 @@ test('validate required error', t => {
 
 test('validate typed error', t => {
     const json = {name: 12};
-    const codec = carnaval().afterDecode(object => validate(object))
+    const codec = carnaval().normalize(false).afterDecode(object => validate(object))
     .codecForClass(Thing).pick('name');
 
     return codec.decode(json)
     .catch(error => {
         t.is(error.message, 'name should be string');
+    });
+});
+
+test('validate no typed error with normalize', t => {
+    const json = {name: 12};
+    const codec = carnaval().afterDecode(object => validate(object))
+    .codecForClass(Thing).pick('name');
+
+    return codec.decode(json).then(thing => {
+        t.is(thing.name, String(json.name));
     });
 });
 
@@ -69,7 +79,7 @@ test('validate deep error', t => {
     const json = {size: 'Medium', thing: null};
     const codec = carnaval().afterDecode(object => validate(object))
     .codecForClass(Box).pick('size', 'thing')
-    .onType('thing', carnaval.Codec.forClass(Thing));
+    .onType('thing', carnaval().codecForClass(Thing));
 
     return codec.decode(json)
     .catch(error => {
@@ -104,12 +114,28 @@ test('validate array', t => {
 
 test('validate array typed error', t => {
     const json = {size: 'Medium', names: ['Shoes', 12]};
-    const codec = carnaval().afterDecode(object => validate(object))
+    const codec = carnaval().normalize(false).afterDecode(object => validate(object))
     .codecForClass(Gift).pick('size', 'names');
 
     return codec.decode(json)
     .catch(error => {
-        t.is(error.message, 'names[1] should be string');
+        t.is(error.message, 'names/1 should be string');
+    });
+});
+
+test('validate array no typed error with normalize', t => {
+    const json = {size: 'Medium', names: ['Shoes', 12]};
+    const codec = carnaval().afterDecode(object => validate(object))
+    .codecForClass(Gift).pick('size', 'names');
+
+    return codec.decode(json).then(gift => {
+        t.true(gift instanceof Gift);
+        t.is(gift.size, json.size);
+        t.true(gift.names instanceof Array);
+        t.is(gift.names[0].constructor, String);
+        t.is(gift.names[1].constructor, String);
+        t.is(gift.names[0], json.names[0]);
+        t.is(gift.names[1], String(json.names[1]));
     });
 });
 
@@ -140,12 +166,29 @@ class Bookcase extends Domain {
 
 test('validate array deep error', t => {
     const json = {size: 'Medium', things: [{name: 'Shoes'}, {name: 12}]};
-    const codec = carnaval().afterDecode(object => validate(object))
+    const codec = carnaval().normalize(false).afterDecode(object => validate(object))
     .codecForClass(Bookcase).pick('size', 'things')
-    .onType(carnaval.Codec.forClass(Thing));
+    .onType('thing', carnaval().normalize(false).codecForClass(Thing));
 
     return codec.decode(json)
     .catch(error => {
-        t.is(error.message, 'things[1].name should be string');
+        t.is(error.message, 'things/1/name should be string');
+    });
+});
+
+test('validate array no deep error with normalize', t => {
+    const json = {size: 'Medium', things: [{name: 'Shoes'}, {name: 12}]};
+    const codec = carnaval().afterDecode(object => validate(object))
+    .codecForClass(Bookcase).pick('size', 'things')
+    .onType('thing', carnaval().codecForClass(Thing));
+
+    return codec.decode(json).then(bookcase => {
+        t.true(bookcase instanceof Bookcase);
+        t.is(bookcase.size, json.size);
+        t.true(bookcase.things instanceof Array);
+        t.is(bookcase.things[0].constructor, Thing);
+        t.is(bookcase.things[1].constructor, Thing);
+        t.is(bookcase.things[0].name, json.things[0].name);
+        t.is(bookcase.things[1].name, String(json.things[1].name));
     });
 });

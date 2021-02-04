@@ -85,7 +85,7 @@ test('freeze deep', t => {
     const json = {size: 'Medium', thing: {name: 'Shoes'}};
     const codec = carnaval().afterDecode(object => deepFreeze(object))
     .codecForClass(Box).pick('size', 'thing')
-    .onType('thing', carnaval.Codec.forClass(Thing));
+    .onType('thing', carnaval().codecForClass(Thing));
 
     return codec.decode(json).then(box => {
         const error = t.throws(() => {
@@ -99,7 +99,7 @@ test('validate deep error', t => {
     const json = {size: 'Medium', thing: null};
     const codec = carnaval().afterDecode(object => validate(object))
     .codecForClass(Box).pick('size', 'thing')
-    .onType('thing', carnaval.Codec.forClass(Thing));
+    .onType('thing', carnaval().codecForClass(Thing));
 
     return codec.decode(json)
     .catch(error => {

@@ -16,7 +16,7 @@
     "devDependencies": {
         "ava": "2.4.x",
         "eslint": "7.11.x",
-        "ajv": "5.4.x"
+        "ajv": "7.0.x"
     },
     "ava": {
         "files": [

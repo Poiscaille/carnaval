@@ -1,5 +1,5 @@
 
-const Ajv = require('ajv');
+const Ajv = require('ajv').default;
 
 const omit = (object, key) => {
     const omitted = {};
@@ -76,7 +76,7 @@ class Validator {
     static validate(object) {
         const schema = JSONSchema.toSchema(object.props);
 
-        const ajv = new Ajv();
+        const ajv = new Ajv({strict: false});
         const valid = ajv.validate(schema, object);
         if (!valid) {
             let message = ajv.errors[0].dataPath;
