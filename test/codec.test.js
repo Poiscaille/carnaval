@@ -180,6 +180,31 @@ test('encode an array through mapping', t => {
     });
 });
 
+const oneWayCodec = Codec.forClass(Gift).pick({prop: 'size', encoded: false}, {prop: 'names', decoded: false});
+
+test('decode an array through mapping & one way', t => {
+    const json = {size: 'Medium', names: ['Shoes', 'Shirt']};
+    const codec = oneWayCodec;
+
+    return codec.decode(json).then(gift => {
+        t.true(gift instanceof Gift);
+        t.is(gift.size, json.size);
+        t.is(gift.names, undefined);
+    });
+});
+
+test('encode an array through mapping & one way', t => {
+    const gift = new Gift({size: 'Medium', names: ['Shoes', 'Shirt']});
+    const codec = oneWayCodec;
+
+    return codec.encode(gift).then(json => {
+        t.is(json.size, undefined);
+        t.true(gift.names instanceof Array);
+        t.is(json.names[0], gift.names[0]);
+        t.is(json.names[1], gift.names[1]);
+    });
+});
+
 class Bookcase extends Domain {
     get props() {
         return {
