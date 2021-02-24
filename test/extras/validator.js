@@ -1,45 +1,41 @@
-
-const omit = (object, key) => {
-    const omitted = {};
-    for (const name in object) {
-        if (name !== key) {
-            omitted[name] = object[name];
-        }
-    }
-    return omitted;
-};
+const Domain = require('../../lib/Domain');
 
 class Validator {
     static validate(object) {
-        Validator._validateProps(object, object.props);
+        const props = object.props || {};
+        const rules = object.rules || {};
+
+        Object.keys(props).forEach(prop => {
+            Validator._validateValue(object[prop], props[prop], rules[prop], prop);
+        });
         return object;
     }
-    static _validateProps(object, props, prefix) {
-        for (const property in props) {
-            if (!props.hasOwnProperty(property)) {
-                continue;
-            }
+    static _validateValue(value, Type, rule, prop, prefix) {
+        rule = rule || {};
+        prefix = prefix || '';
+        if (Array.isArray(Type)) {
+            return Validator._validateArrayValue(value, Type, rule);
+        }
 
-            const field = props[property];
-            const rules = omit(field.rules || {}, 'domain');
-            const domain = field.rules && field.rules.domain;
-            if (rules.required) {
-                if (!object || !object[property]) {
-                    prefix = prefix || '';
-                    throw new Error(`${prefix}${property} is required`);
-                }
-            }
-
-            const type = field.type || field;
-            if (!Validator._isSimpleType(type)) {
-                const subobject = object[property];
-                const subprops = domain && domain.prototype.props;
-                Validator._validateProps(subobject, subprops, `${property}.`);
+        if (rule.required) {
+            if (!value) {
+                throw new Error(`${prefix}${prop} is required`);
             }
         }
+
+        const props = Domain.match(Type) ? Validator._props(Type) : Type;
+        Object.keys(props).forEach(subprop => {
+            Validator._validateValue(value && value[subprop], props[subprop], rule[subprop], subprop, `${prop}.`);
+        });
     }
-    static _isSimpleType(type) {
-        return ['string', 'number', 'boolean'].indexOf(type) !== -1;
+    static _validateArrayValue(value, Type) {
+        if (!Array.isArray(value)) {
+            return;
+        }
+        return value.map(item => Validator._validateValue(item, Type[0]));
+    }
+    static _props(Type) {
+        return Type.prototype.props || {};
     }
 }
 

@@ -1,10 +1,12 @@
-
 const Ajv = require('ajv').default;
 
-const omit = (object, key) => {
+const Domain = require('../../lib/Domain');
+
+const omit = (object, ...keys) => {
+    keys = keys || [];
     const omitted = {};
     for (const name in object) {
-        if (name !== key) {
+        if (!keys.includes(name)) {
             omitted[name] = object[name];
         }
     }
@@ -12,69 +14,95 @@ const omit = (object, key) => {
 };
 
 class JSONSchema {
-    static toSchema(props) {
+    static toSchema(object, rules) {
+        const props = object.props || {};
+        rules = rules || object.rules || {};
+
         const schema = {
             properties: {},
             required: []
         };
 
-        for (const property in props) {
-            if (!props.hasOwnProperty(property)) {
-                continue;
+        Object.keys(rules).forEach(prop => {
+            const rule = rules[prop];
+            if (rule.required) {
+                schema.required.push(prop);
+            }
+            
+            const Type = props[prop];
+            if (Array.isArray(Type)) {
+                schema.properties[prop] = JSONSchema._toArrayProp(Type, rule);
+                return;
             }
 
-            const field = props[property];
-            const type = field.type || field;
-            const rules = omit(field.rules || {}, 'domain');
-            const domain = field.rules && field.rules.domain;
-            if (rules.required) {
-                schema.required.push(property);
-            }
-
-            if (Array.isArray(type)) {
-                schema.properties[property] = Object.assign({
-                    type: 'array',
-                    items: JSONSchema._toArrayProp(type[0], domain, rules)
-                }, omit(rules, 'required'));
-            } else if (!JSONSchema._isSimpleType(type)) {
-                Object.assign(rules, domain && domain.prototype.props);
-                schema.properties[property] = JSONSchema._toDomainProp(rules);
-            } else {
-                schema.properties[property] = JSONSchema._toNativeProp(type, rules);
-            }
-        }
+            schema.properties[prop] = JSONSchema._toObjectProp(Type, rule);
+        });
         return schema;
     }
-    static _toDomainProp(subprops) {
+    static _toNativeProp(Type, rule) {
+        const props = JSONSchema._props(Type);
+        
+        return Object.assign({
+            type: JSONSchema._toStringType(Type)
+        }, omit(rule, 'required', ...Object.keys(props)));
+    }
+    static _toDomainProp(subobject, rule) {
         return Object.assign({
             type: 'object'
-        }, JSONSchema.toSchema(subprops));
+        }, JSONSchema.toSchema(subobject, rule));
     }
-    static _toNativeProp(type, rules) {
+    static _toObjectProp(Type, rule) {
+        switch (Type) {
+            case Object:
+            case Boolean:
+            case String:
+            case Number:
+            case Date:
+                return JSONSchema._toNativeProp(Type, rule);
+            default:
+                if (Domain.match(Type)) {
+                    return JSONSchema._toDomainProp(Type.prototype, rule);
+                } else {
+                    return JSONSchema.toSchema({props: Type}, rule);
+                }
+        }
+    }
+    static _toArrayProp(Types, rule) {
+        const Type = Types[0];
+        const props = JSONSchema._props(Type);
+
         return Object.assign({
-            type: type
-        }, omit(rules, 'required'));
+            type: 'array',
+            items: JSONSchema._toArrayItems(Type, rule)
+        }, omit(rule, 'required', ...Object.keys(props)));
     }
-    static _toArrayProp(type, domain, rules) {
+    static _toArrayItems(Type, rule) {
         let items;
-        if (rules.items) {
-            items = rules.items;
-        } else if (!JSONSchema._isSimpleType(type)) {
-            Object.assign(rules || {}, domain && domain.prototype.props);
-            items = JSONSchema._toDomainProp(rules);
+        if (rule.items) {
+            items = rule.items;
         } else {
-            items = JSONSchema._toNativeProp(type, rules);
+            items = JSONSchema._toObjectProp(Type, rule);
         }
         return items;
     }
-    static _isSimpleType(type) {
-        return ['string', 'number', 'boolean'].indexOf(type) !== -1;
+    static _toStringType(Type) {
+        switch (Type) {
+            case Object: return 'object';
+            case String: return 'string';
+            case Number: return 'number';
+            case Boolean: return 'boolean';
+            case Date: return 'date';
+            default: return;
+        }
+    }
+    static _props(Type) {
+        return Domain.match(Type) ? Type.prototype.props : Type;
     }
 }
 
 class Validator {
     static validate(object) {
-        const schema = JSONSchema.toSchema(object.props);
+        const schema = JSONSchema.toSchema(object);
 
         const ajv = new Ajv({strict: false});
         const valid = ajv.validate(schema, object);

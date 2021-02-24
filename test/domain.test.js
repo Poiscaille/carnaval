@@ -1,12 +1,12 @@
 const test = require('ava');
 
-const Domain = require('../lib/domain');
+const Domain = require('../lib/Domain');
 const validate = require('./extras/validator');
 
 class Thing extends Domain {
     get props() {
         return {
-            name: 'string'
+            name: String
         };
     }
 }
@@ -39,7 +39,7 @@ test('domain assign', t => {
 class ImmutableThing extends Domain {
     get props() {
         return {
-            name: 'string'
+            name: String
         };
     }
     get options() {
@@ -85,7 +85,7 @@ test('domain immutable assign', t => {
 class ImmutableValidatedThing extends Domain {
     get props() {
         return {
-            name: {type: 'string', rules: {required: true}}
+            name: String
         };
     }
     get options() {
@@ -94,16 +94,21 @@ class ImmutableValidatedThing extends Domain {
             validate: validate
         };
     }
+    get rules() {
+        return {
+            name: {required: true}
+        };
+    }
 }
 
-test('domain immutable valid creation', t => {
+test.only('domain immutable valid creation', t => {
     const name = 'Kidstown';
     const thing = new ImmutableValidatedThing({name});
 
     t.is(thing.name, name);
 });
 
-test('domain immutable invalid creation', t => {
+test.only('domain immutable invalid creation', t => {
     const error = t.throws(() => {
         const thing = new ImmutableValidatedThing(); // eslint-disable-line no-unused-vars
     });
