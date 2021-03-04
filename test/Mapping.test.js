@@ -589,6 +589,35 @@ test('encode through mapping & alias', t => {
     });
 });
 
+test('decode array through mapping & alias', t => {
+    const mapping = Mapping.map(UnreferencedBoxes).with({
+        size: {alias: 'fullsize'},
+        things: {name: {alias: 'fullname'}}
+    });
+    const json = {fullsize: 40, things: [{fullname: 'Shoes'}]};
+
+    return mapping.decode(json).then(boxes => {
+        t.true(boxes instanceof UnreferencedBoxes);
+        t.is(boxes.size, json.fullsize);
+        t.true(boxes.things instanceof Array);
+        t.is(boxes.things[0].name, json.things[0].fullname);
+    });
+});
+
+test('encode array through mapping & alias', t => {
+    const mapping = Mapping.map(UnreferencedBoxes).with({
+        size: {alias: 'fullsize'},
+        things: {name: {alias: 'fullname'}}
+    });
+    const boxes = new UnreferencedBoxes({size: 40, things: [new Thing({name: 'Shoes'})]});
+
+    return mapping.encode(boxes).then(json => {
+        t.is(json.fullsize, boxes.size);
+        t.true(json.things instanceof Array);
+        t.is(json.things[0].fullname, boxes.things[0].name);
+    });
+});
+
 test('decode through mapping & hook', t => {
     const mapping = Mapping.map(Thing)
     .beforeDecode(json => {
@@ -625,6 +654,47 @@ test('encode through mapping & hook', t => {
     return mapping.encode(thing).then(json => {
         t.is(json.name, `2x ${thing.name}`);
         t.is(json.formattedName, `2x ${thing.name}`.toLowerCase());
+    });
+});
+
+test('decode array through mapping & hook', t => {
+    const mapping = Mapping.map(Thing)
+    .beforeDecode(json => {
+        const clone = Object.assign({}, json);
+        clone.name = `2x ${clone.name}`;
+        return clone;
+    })
+    .afterDecode(object => {
+        object.formattedName = object.name.toLowerCase();
+        return object;
+    });
+    const jsons = [{name: 'Shoes'}];
+
+    return mapping.decode(jsons).then(things => {
+        t.true(things instanceof Array);
+        t.true(things[0] instanceof Thing);
+        t.is(things[0].name, `2x ${jsons[0].name}`);
+        t.is(things[0].formattedName, `2x ${jsons[0].name}`.toLowerCase());
+    });
+});
+
+test('encode array through mapping & hook', t => {
+    const mapping = Mapping.map(Thing)
+    .beforeEncode(object => {
+        const clone = new Thing(object);
+        clone.name = `2x ${clone.name}`;
+        return clone;
+    })
+    .afterEncode(json => {
+        json.formattedName = json.name.toLowerCase();
+        return json;
+    });
+    const things = [new Thing({name: 'Shoes'})];
+
+    return mapping.encode(things).then(jsons => {
+        t.true(jsons instanceof Array);
+        t.is(jsons[0].name, `2x ${things[0].name}`);
+        t.is(jsons[0].formattedName, `2x ${things[0].name}`.toLowerCase());
     });
 });
 
