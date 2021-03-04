@@ -284,6 +284,43 @@ test('encode empty array through mapping', t => {
     });
 });
 
+test('decode literal to array through mapping', t => {
+    const mapping = Mapping.map(Gift).with({
+        names: {
+            set: value => Object.keys(value).reduce((memo, item) => {
+                memo.push(item);
+                return memo;
+            }, [])
+        }
+    });
+    const json = {names: {'Shoes': true, 'Shirt': true}};
+
+    return mapping.decode(json).then(gift => {
+        t.true(gift instanceof Gift);
+        t.true(gift.names instanceof Array);
+        t.is(gift.names[0], 'Shoes');
+        t.is(gift.names[1], 'Shirt');
+    });
+});
+
+test('encode array to literal through mapping', t => {
+    const mapping = Mapping.map(Gift).with({
+        names: {
+            get: value => value.reduce((memo, item) => {
+                memo[item] = true;
+                return memo;
+            }, {})
+        }
+    });
+    const gift = new Gift({names: ['Shoes', 'Shirt']});
+
+    return mapping.encode(gift).then(json => {
+        t.true(json.names instanceof Object);
+        t.true(json.names['Shoes']);
+        t.true(json.names['Shirt']);
+    });
+});
+
 class Bookcase extends Domain {
     get props() {
         return {
@@ -384,9 +421,9 @@ class Period extends Domain {
 
 test('decode date array through mapping & transform', t => {
     const mapping = Mapping.map(Period).with({
-        dates: {
+        dates: [{
             set: value => new Date(value)
-        }
+        }]
     });
     const json = {dates: [1483916400000, 1484002800000]};
 
@@ -402,9 +439,9 @@ test('decode date array through mapping & transform', t => {
 
 test('encode date array through mapping & transform', t => {
     const mapping = Mapping.map(Period).with({
-        dates: {
+        dates: [{
             get: value => value.getTime()
-        }
+        }]
     });
     const period = new Period({dates: [new Date('01/09/2017'), new Date('10/09/2017')]});
 
@@ -592,7 +629,7 @@ test('encode through mapping & alias', t => {
 test('decode array through mapping & alias', t => {
     const mapping = Mapping.map(UnreferencedBoxes).with({
         size: {alias: 'fullsize'},
-        things: {name: {alias: 'fullname'}}
+        things: [{name: {alias: 'fullname'}}]
     });
     const json = {fullsize: 40, things: [{fullname: 'Shoes'}]};
 
@@ -607,7 +644,7 @@ test('decode array through mapping & alias', t => {
 test('encode array through mapping & alias', t => {
     const mapping = Mapping.map(UnreferencedBoxes).with({
         size: {alias: 'fullsize'},
-        things: {name: {alias: 'fullname'}}
+        things: [{name: {alias: 'fullname'}}]
     });
     const boxes = new UnreferencedBoxes({size: 40, things: [new Thing({name: 'Shoes'})]});
 
