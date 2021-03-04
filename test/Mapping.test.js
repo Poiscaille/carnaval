@@ -592,12 +592,13 @@ test('encode through mapping & alias', t => {
 test('decode through mapping & hook', t => {
     const mapping = Mapping.map(Thing)
     .beforeDecode(json => {
-        json.name = `2x ${json.name}`;
-        return json;
+        const clone = Object.assign({}, json);
+        clone.name = `2x ${clone.name}`;
+        return clone;
     })
-    .afterDecode(json => {
-        json.formattedName = json.name.toLowerCase();
-        return json;
+    .afterDecode(object => {
+        object.formattedName = object.name.toLowerCase();
+        return object;
     });
     const json = {name: 'Shoes'};
 
@@ -610,9 +611,10 @@ test('decode through mapping & hook', t => {
 
 test('encode through mapping & hook', t => {
     const mapping = Mapping.map(Thing)
-    .beforeEncode(json => {
-        json.name = `2x ${json.name}`;
-        return json;
+    .beforeEncode(object => {
+        const clone = new Thing(object);
+        clone.name = `2x ${clone.name}`;
+        return clone;
     })
     .afterEncode(json => {
         json.formattedName = json.name.toLowerCase();
