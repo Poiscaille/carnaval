@@ -262,15 +262,8 @@ class Friend extends Domain {
             name: {required: true}
         }
     }
-    get options() {
-        return {
-            immutable: true,
-            validate: validate
-        };
-    }
 }
 
-const mapping = Mapping.map(Friend);
-
+const mapping = Mapping.map(Friend).afterDecode(object => validate(object));
 mapping.decode({}) // depending on validate, this will throw an error
 ```
