@@ -241,7 +241,7 @@ class UnknownBoxes extends Domain {
     }
 }
 
-test.only('validate free deep error', t => {
+test('validate free deep error', t => {
     const json = {size: 40};
     const mapping = Mapping.map(UnknownBoxes).afterDecode(object => validate(object));
 

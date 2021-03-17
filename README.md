@@ -33,22 +33,21 @@ $ npm install carnaval
 
 ## Features
 
-* Encode & decode object with a constructor / class
+* Encode & decode objects with a constructor / class
 * Handle deep objects and arrays
 * Configurable through middlewares & providers
-* Provide a domain class to inherit from, with immutability & validation (_as options_)
+* Options to mask / merge instances for update scenarios
+* Provide a domain class to inherit from
 
 ## Usage
 
-### Mapping
-
 **Props**
 
-To properly encode / decode a class, this class should list its attributes through a `props` literal. One key per attribute (_ex. `name`_), one value for this attribute type (_ex. `String`_). Types should be `function`, their names are relevant for deep encoding / decoding.
+To properly encode / decode / mask a class, this class should list its attributes through a `props` literal. One key per attribute (_ex. `name`_), one value for this attribute type (_ex. `String`_). Types should be `function` / `constructor`, their names are relevant for deep encoding / decoding.
 
-**Mapping**
+### Mapping
 
-A mapping define the way a json literal will be mapped to a class object (_with `decode`_) or mapped from it (_with `encode`_). In both cases, this returns a `Promise`. By default, every class' `props` will be duplicated (_deep copy_).
+A mapping defines the way a json literal will be mapped to a class object (_with `decode`_) or mapped from it (_with `encode`_). In both cases, this returns a `Promise`. By default, every class' `props` will be duplicated (_deep copy_).
 
 ```javascript
 const mapping = Mapping.map(Friend);
@@ -215,9 +214,23 @@ mapping.decode({age: '27'}).then(friend => { /* new Friend({age: 27}) */ });
 mappingNotCasted.decode({age: '27'}).then(friend => { /* new Friend({age: '27'}) */ });
 ```
 
+### Mask
+
+Used after mapping json to class, masks ease update scenarios. A mask defines the way an instance can be overriden by another one (of the same type) according to a 'readonly' schema (thus erasing on the new instance the attributes from the original that should not be changed).
+
+```javascript
+const mask = Mask.cover(Friend).with({age: true})
+const touched = mask.settle(new Friend({name: 'Joe', age: 27}), new Friend({name: 'Jack', age: 33})); /* settle(dest, source) */
+
+friend; /* {name: 'Joe', age: 33} */
+touched; /* {name: true} */
+```
+
+A `touched` literal is returned a list of the updated attributes.
+
 ### Domain
 
-A domain class is supplied optionally to inherit from, in order to ease immutability and validation (_both optional_). Its constructor copy only defined props in the instance attributes on `new`.
+A domain class is supplied optionally to inherit from, in order to ease `props` definition and creation (its constructor copy only defined props in the instance attributes on `new`).
 
 ```javascript
 const Domain = carnaval.Domain;
@@ -229,39 +242,12 @@ class Friend extends Domain {
             age: Number
         };
     }
-    get options() {
-        return {
-            immutable: true,
-            validate: validate
-        };
-    }
 }
-```
-
-**Domain immutability**
-
-Using the `immutable` flag as an `options` attribute will froze every instance of the class (_recursively_). Thus, updating one of its attributes will results in a `Cannot assign to read property...` (immutability improve stability).
-
-Because updating an immutable object need a new object creation with the one or two attributes changes, an `assign` function is also provided to ease the process. This function is more intended for a class internal usage.
-
-```javascript
-class Friend extends Domain {
-    birthday() {
-        return this.assign({age: this.age + 1})
-    }
-}
-
-let friend = new Friend({name: 'Joe', age: 27});
-friend = friend.birthday(); // careful to get the returned modified value
 ```
 
 **Domain validation**
 
-A `validate` method can be given as an `options` attributes to validate every class instance before creation. If validation and immutability are configured, validation is done first.
-
-With validation and immutability, an object is always valid, because each of its update is validated (_if validation is done solely with a middleware, it can leave the object updates invalid_).
-
-A `rules` attributes can be used to define the validation schema. A custom validate implentation can then handle all the checks. An [ajv implentation](./test/extras/validator-ajv.js) is providen as an example.
+A `rules` attributes can be used to define a validation schema. A custom validate implentation can then handle all the checks. An [ajv implentation](./test/extras/validator-ajv.js) is providen as an example.
 
 ```javascript
 class Friend extends Domain {
