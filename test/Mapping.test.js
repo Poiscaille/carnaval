@@ -748,8 +748,70 @@ test('decode through mapping & defaults', t => {
     });
 });
 
+test('decode through mapping & defaults overriden', t => {
+    const mapping = Mapping.map(Thing)
+    .with({
+        name: {}
+    })
+    .defaults({
+        permissions: 'r-'
+    });
+    const json = {name: 'Shoes'};
+
+    return mapping.decode(json).then(thing => {
+        t.true(thing instanceof Thing);
+        t.is(thing.name, json.name);
+    });
+});
+
+test('decode through mapping & defaults overriden x2', t => {
+    const mapping = Mapping.map(Thing)
+    .with({
+        name: {set: false}
+    })
+    .defaults({
+        permissions: 'r-'
+    });
+    const json = {name: 'Shoes'};
+
+    return mapping.decode(json).then(thing => {
+        t.true(thing instanceof Thing);
+        t.is(thing.name, undefined);
+    });
+});
+
 test('encode through mapping & defaults', t => {
     const mapping = Mapping.map(Thing)
+    .defaults({
+        permissions: '-w'
+    });
+    const thing = new Thing({name: 'Shoes'});
+
+    return mapping.encode(thing).then(json => {
+        t.false(json.hasOwnProperty('name'));
+    });
+});
+
+test('encode through mapping & defaults overriden', t => {
+    const mapping = Mapping.map(Thing)
+    .with({
+        name: {}
+    })
+    .defaults({
+        permissions: '-w'
+    });
+    const thing = new Thing({name: 'Shoes'});
+
+    return mapping.encode(thing).then(json => {
+        t.is(json.name, thing.name);
+    });
+});
+
+test('encode through mapping & defaults overriden x2', t => {
+    const mapping = Mapping.map(Thing)
+    .with({
+        name: {get: false}
+    })
     .defaults({
         permissions: '-w'
     });
