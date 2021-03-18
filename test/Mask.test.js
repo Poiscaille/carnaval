@@ -178,7 +178,7 @@ test('assign empty root deep, touched & schema', t => {
     t.is(touched.thing, undefined);
 });
 
-class UnreferencedBox extends Domain {
+class UnknownBox extends Domain {
     get props() {
         return {
             thing: Object
@@ -187,7 +187,7 @@ class UnreferencedBox extends Domain {
 }
 
 test('assign empty class tree, touched & schema', t => {
-    const mask = Mask.cover(UnreferencedBox).with({
+    const mask = Mask.cover(UnknownBox).with({
         thing: {
             name: true
         }
@@ -195,10 +195,10 @@ test('assign empty class tree, touched & schema', t => {
 
     const name = 'Shoes';
 
-    const box = new UnreferencedBox();
+    const box = new UnknownBox();
     const touched = mask.settle(
         box,
-        new UnreferencedBox({thing: {name}})
+        new UnknownBox({thing: {name}})
     );
 
     t.is(box.thing.name, name);
@@ -297,4 +297,131 @@ test('assign class tree array, touched & schema', t => {
         t.true(touched.things[i].details.more);
         t.is(touched.things[i].details.less, undefined);
     }
+});
+
+test('assign deep mask, touched & schema', t => {
+    const mask = Mask.cover(Box).with({
+        thing: Mask.cover(Thing).with({
+            physical: true
+        })
+    });
+
+    const name = 'Shoes';
+    const size = 40;
+    const description = 'Adventure Playground';
+    const physical = true;
+
+    const box = new Box({thing: {name, description, size, physical: 'ignored'}});
+    const touched = mask.settle(
+        box,
+        new Box({thing: {name: 'overriden', description, physical}})
+    );
+
+    t.is(box.thing.name, name);
+    t.is(box.thing.description, description);
+    t.is(box.thing.size, size);
+    t.is(box.thing.physical, physical);
+
+    t.true(touched.thing.name);
+    t.is(touched.thing.description, undefined);
+    t.true(touched.thing.size);
+    t.is(touched.thing.physical, undefined);
+});
+
+test('domain cover props', t => {
+    const mask = Mask.cover(Thing).except();
+    
+    const name = 'Shoes';
+
+    const thing = new Thing({name: 'ignored'});
+    mask.settle(thing, new Thing({name: name}));
+    
+    t.is(thing.name, name);
+});
+
+test('domain cover & omit props', t => {
+    const mask = Mask.cover(Thing).except({name: false});
+    
+    const name = 'Shoes';
+
+    const thing = new Thing({name: name});
+    mask.settle(thing, new Thing({name: 'overriden'}));
+    
+    t.is(thing.name, name);
+});
+
+test('domain cover deep props', t => {
+    const mask = Mask.cover(Box).except();
+    
+    const name = 'Shoes';
+
+    const box = new Box({thing: {name: 'ignored'}});
+    mask.settle(box, new Box({thing: {name: name}}));
+    
+    t.is(box.thing.name, name);
+});
+
+test('domain cover & omit deep props', t => {
+    const mask = Mask.cover(Box).except({thing: {name: false}});
+    
+    const name = 'Shoes';
+
+    const box = new Box({thing: {name: name}});
+    mask.settle(box, new Box({thing: {name: 'overriden'}}));
+    
+    t.is(box.thing.name, name);
+});
+
+test('domain cover deep free props', t => {
+    const mask = Mask.cover(UnknownBox).except();
+    
+    const name = 'Shoes';
+
+    const box = new UnknownBox({thing: {name: 'ignored'}});
+    mask.settle(box, new UnknownBox({thing: {name: name}}));
+    
+    t.is(box.thing.name, name);
+});
+
+test('domain cover & omit deep free props', t => {
+    const mask = Mask.cover(UnknownBox).except({thing: false});
+    
+    const name = 'Shoes';
+
+    const box = new UnknownBox({thing: {name: name}});
+    mask.settle(box, new UnknownBox({thing: {name: 'overriden'}}));
+    
+    t.is(box.thing.name, name);
+});
+
+class UnreferencedBox extends Domain {
+    get props() {
+        return {
+            thing: {
+                name: String
+            }
+        };
+    }
+}
+
+test('domain cover deep untyped props', t => {
+    const mask = Mask.cover(UnreferencedBox).except();
+    
+    const name = 'Shoes';
+
+    const box = new UnreferencedBox({thing: {name: 'ignored'}});
+    mask.settle(box, new UnreferencedBox({thing: {name: name}}));
+    
+    t.is(box.thing.name, name);
+});
+
+test('domain cover & omit deep untyped props', t => {
+    const mask = Mask.cover(UnreferencedBox).except({thing: {name: false}});
+    
+    const name = 'Shoes';
+
+    const box = new UnreferencedBox({thing: {name: name}});
+    mask.settle(box, new UnreferencedBox({thing: {name: 'overriden'}}));
+    
+    t.is(box.thing.name, name);
 });

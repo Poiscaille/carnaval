@@ -224,6 +224,12 @@ const touched = mask.settle(new Friend({name: 'Joe', age: 27}), new Friend({name
 
 friend; /* {name: 'Joe', age: 33} */
 touched; /* {name: true} */
+
+const mask = Mask.cover(Friend).except({age: true})
+const touched = mask.settle(new Friend({name: 'Joe', age: 27}), new Friend({name: 'Jack', age: 33})); /* settle(dest, source) */
+
+friend; /* {name: 'Jack', age: 27} */
+touched; /* {age: true} */
 ```
 
 A `touched` literal is returned a list of the updated attributes.
