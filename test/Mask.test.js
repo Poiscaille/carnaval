@@ -178,6 +178,33 @@ test('assign empty root deep, touched & schema', t => {
     t.is(touched.thing, undefined);
 });
 
+class Shipping extends Domain {
+    get props() {
+        return {
+            box: Box
+        };
+    }
+}
+
+test('assign double empty deep, touched & schema', t => {
+    const mask = Mask.cover(Shipping).with({
+        box: {
+            thing: {
+                size: true
+            }
+        }
+    });
+
+    const shipping = new Shipping();
+    const touched = mask.settle(
+        shipping,
+        new Shipping()
+    );
+
+    t.is(shipping.box, undefined);
+    t.is(touched.box, undefined);
+});
+
 class UnknownBox extends Domain {
     get props() {
         return {
