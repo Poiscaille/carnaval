@@ -452,3 +452,62 @@ test('domain cover & omit deep untyped props', t => {
     
     t.is(box.thing.name, name);
 });
+
+class DatedBox extends Domain {
+    get props() {
+        return {
+            date: Date
+        };
+    }
+}
+
+test('assign, date untouched', t => {
+    const mask = Mask.cover(DatedBox);
+
+    const date = new Date();
+
+    const box = new DatedBox({date});
+    const touched = mask.settle(
+        box,
+        new DatedBox({date})
+    );
+
+    t.is(box.date, date);
+
+    t.is(touched.date, undefined);
+});
+
+test('assign, date touched', t => {
+    const mask = Mask.cover(DatedBox);
+
+    const date = new Date();
+    const dateClone = new Date(date.getTime());
+
+    const box = new DatedBox({date});
+    const touched = mask.settle(
+        box,
+        new DatedBox({date: dateClone})
+    );
+
+    t.is(box.date, date);
+
+    t.is(touched.date, undefined);
+});
+
+test('assign, date touched & updated', t => {
+    const mask = Mask.cover(DatedBox);
+
+    const date = new Date();
+    const epoch = new Date();
+    epoch.setTime(0); // 1970-01-01
+
+    const box = new DatedBox({date});
+    const touched = mask.settle(
+        box,
+        new DatedBox({date: epoch})
+    );
+
+    t.is(box.date, date);
+
+    t.true(touched.date);
+});
