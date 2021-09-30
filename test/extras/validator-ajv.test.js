@@ -246,7 +246,30 @@ test('validate free deep error', t => {
     const mapping = Mapping.map(UnknownBoxes).afterDecode(object => validate(object));
 
     return mapping.decode(json)
-    .then(res => console.log(res))
+    .catch(error => {
+        t.is(error.message, 'things should NOT have fewer than 1 items');
+    });
+});
+
+class UnknownAlternativeBoxes extends Domain {
+    get props() {
+        return {
+            size: Number,
+            things: [Object]
+        };
+    }
+    get rules() {
+        return {
+            things: [{minItems: 1}]
+        };
+    }
+}
+
+test('validate free deep error (alternative)', t => {
+    const json = {size: 40};
+    const mapping = Mapping.map(UnknownAlternativeBoxes).afterDecode(object => validate(object));
+
+    return mapping.decode(json)
     .catch(error => {
         t.is(error.message, 'things should NOT have fewer than 1 items');
     });

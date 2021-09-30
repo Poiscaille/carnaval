@@ -28,14 +28,19 @@ class JSONSchema {
             if (rule.required) {
                 schema.required.push(prop);
             }
-            
+
+            let propSchema;
             const Type = props[prop];
             if (Array.isArray(Type)) {
-                schema.properties[prop] = JSONSchema._toArrayProp(Type, rule);
-                return;
+                propSchema = JSONSchema._toArrayProp(Type, rule);
+            } else {
+                propSchema = JSONSchema._toObjectProp(Type, rule);
             }
 
-            schema.properties[prop] = JSONSchema._toObjectProp(Type, rule);
+            schema.properties[prop] = propSchema;
+            if (propSchema.required) {
+                schema.required.push(prop);
+            }
         });
         return schema;
     }
@@ -71,6 +76,8 @@ class JSONSchema {
         const Type = Types[0];
         const props = JSONSchema._props(Type);
 
+        rule = Array.isArray(rule) ? rule[0] : rule;
+
         return Object.assign({
             type: 'array',
             items: JSONSchema._toArrayItems(Type, rule)
@@ -91,7 +98,7 @@ class JSONSchema {
             case String: return 'string';
             case Number: return 'number';
             case Boolean: return 'boolean';
-            case Date: return 'date';
+            case Date: return 'object';
             default: return;
         }
     }
