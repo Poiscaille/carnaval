@@ -24,7 +24,7 @@ test('assign, touched & schema', t => {
     const description = 'Adventure Playground';
     const physical = true;
 
-    const thing = new Thing({name, size: 'ignored', physical: 'ignored'})
+    const thing = new Thing({name, size: 'ignored', physical: 'ignored'});
     const touched = mask.settle(
         thing,
         new Thing({name: 'overriden', description, physical})
@@ -79,6 +79,21 @@ test('assign array, touched (more)', t => {
     t.deepEqual(touched.names, [true, false]);
 });
 
+test('assign empty array, touched', t => {
+    const mask = Mask.cover(Gift);
+
+    const names = [];
+
+    const gift = new Gift({names});
+    const touched = mask.settle(
+        gift,
+        new Gift({names: ['Jeans', 'Shirt', 'Jeans']})
+    );
+
+    t.deepEqual(gift.names, []);
+    t.deepEqual(touched.names, []);
+});
+
 test('assign array, touched & schema', t => {
     const mask = Mask.cover(Gift).with({
         names: true
@@ -93,6 +108,23 @@ test('assign array, touched & schema', t => {
     );
 
     t.deepEqual(gift.names, ['Jeans', 'Shirt']);
+    t.is(touched.names, undefined);
+});
+
+test('assign empty array, touched & schema', t => {
+    const mask = Mask.cover(Gift).with({
+        names: true
+    });
+
+    const names = ['Shoes', 'Shirt', 'Jeans'];
+
+    const gift = new Gift({names});
+    const touched = mask.settle(
+        gift,
+        new Gift({names: []})
+    );
+
+    t.deepEqual(gift.names, []);
     t.is(touched.names, undefined);
 });
 
