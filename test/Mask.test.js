@@ -308,6 +308,31 @@ test('assign deep array, touched', t => {
     }
 });
 
+class Cart extends Domain {
+    get props() {
+        return {
+            gifts: [Gift]
+        };
+    }
+}
+
+test('assign deep array within array, touched (less)', t => {
+    const mask = Mask.cover(Cart);
+
+    const names = ['Shoes', 'Shirt', 'Jeans'];
+
+    const cart = new Cart({gifts: [new Gift({names}), new Gift({names})]});
+    const touched = mask.settle(
+        cart,
+        new Cart({gifts: [new Gift({names: ['Jeans', 'Shirt']})]})
+    );
+
+    t.deepEqual(cart.gifts[0].names, ['Shoes', 'Shirt', 'Jeans']);
+    t.deepEqual(cart.gifts[1].names, ['Shoes', 'Shirt', 'Jeans']);
+    t.deepEqual(touched.gifts[0].names, [true, false, true]);
+    t.deepEqual(touched.gifts[1].names, [true, true, true]);
+});
+
 class UnreferencedBoxes extends Domain {
     get props() {
         return {
