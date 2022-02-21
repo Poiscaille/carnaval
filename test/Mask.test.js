@@ -94,6 +94,23 @@ test('assign empty array, touched', t => {
     t.deepEqual(touched.names, []);
 });
 
+test('assign array, untouched', t => {
+    const mask = Mask.cover(Gift).with({
+        names: true
+    });
+
+    const names = [];
+
+    const gift = new Gift({names});
+    const touched = mask.settle(
+        gift,
+        new Gift({names: ['Jeans', 'Shirt', 'Jeans']})
+    );
+
+    t.deepEqual(gift.names, ['Jeans', 'Shirt', 'Jeans']);
+    t.deepEqual(touched.names, undefined);
+});
+
 test('assign array, touched & schema', t => {
     const mask = Mask.cover(Gift).with({
         names: true
@@ -306,6 +323,31 @@ test('assign deep array, touched', t => {
         t.is(touched.things[i].size, undefined);
         t.is(touched.things[i].physical, undefined);
     }
+});
+
+test('assign deep array, untouched', t => {
+    const mask = Mask.cover(Boxes).with({
+        things: true
+    });
+
+    const name = 'Shoes';
+    const description = 'Adventure Playground';
+    const physical = true;
+
+    const boxes = new Boxes({things: []});
+    const touched = mask.settle(
+        boxes,
+        new Boxes({things: [{name, description, physical}, {name, description, physical}]})
+    );
+
+    for (let i = 0; i < 2; i++) {
+        t.is(boxes.things[i].name, name);
+        t.is(boxes.things[i].description, description);
+        t.is(boxes.things[i].size, undefined);
+        t.is(boxes.things[i].physical, physical);
+    }
+
+    t.is(touched.thing, undefined);
 });
 
 class Cart extends Domain {
