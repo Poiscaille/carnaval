@@ -569,6 +569,42 @@ test('encode class tree through mapping & transform', t => {
     });
 });
 
+test('decode array class tree through mapping & transform', t => {
+    const mapping = Mapping.map(UnreferencedBoxes).with({
+        things: [Mapping.map(Thing).with({
+            name: {
+                set: value => value.toUpperCase()
+            }
+        })]
+    });
+    const json = {size: 40, things: [{name: 'Shoes'}]};
+
+    return mapping.decode(json).then(boxes => {
+        t.true(boxes instanceof UnreferencedBoxes);
+        t.is(boxes.size, json.size);
+        t.true(boxes.things instanceof Array);
+        t.is(boxes.things[0].name, json.things[0].name.toUpperCase());
+    });
+});
+
+test('encode array class tree through mapping & transform', t => {
+    const mapping = Mapping.map(UnreferencedBoxes).with({
+        things: [Mapping.map(Thing).with({
+            name: {
+                get: value => value.toLowerCase()
+            }
+        })]
+    });
+    const boxes = new UnreferencedBoxes({size: 40, things: [new Thing({name: 'Shoes'})]});
+
+    return mapping.encode(boxes).then(json => {
+        t.is(json.size, boxes.size);
+        t.true(json.things instanceof Array);
+        t.is(json.size, 40);
+        t.is(json.things[0].name, boxes.things[0].name.toLowerCase());
+    });
+});
+
 test('decode class tree through mapping & visibility transform', t => {
     const mapping = Mapping.map(Box).with({
         size: {
