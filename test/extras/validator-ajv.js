@@ -38,7 +38,9 @@ class JSONSchema {
             }
 
             schema.properties[prop] = propSchema;
-            if (propSchema.required) {
+            
+            const required = this._isPropRequired(rule);
+            if ((propSchema.required && propSchema.required.length) || required) {
                 schema.required.push(prop);
             }
         });
@@ -101,6 +103,14 @@ class JSONSchema {
             case Date: return 'object';
             default: return;
         }
+    }
+    static _isPropRequired(rule) {
+        for (const prop in rule) {
+            if (rule[prop].required) {
+                return true;
+            }
+        }
+        return false;
     }
     static _props(Type) {
         return Domain.match(Type) ? Type.prototype.props : Type;

@@ -94,6 +94,63 @@ test('validate deep error', t => {
     });
 });
 
+class EmptyBox extends Domain {
+    get props() {
+        return {
+            size: String,
+            thing: Thing
+        };
+    }
+    get rules() {
+        return {
+            thing: {
+                name: {
+                    value: {enum: ['valued']}
+                }
+            }
+        };
+    }
+}
+
+test('validate deep (two levels) optionnal', t => {
+    const json = {};
+    const mapping = Mapping.map(EmptyBox).afterDecode(object => validate(object));
+
+    return mapping.decode(json)
+    .then(emptyBox => {
+        t.true(emptyBox instanceof EmptyBox);
+        t.is(emptyBox.thing, undefined);
+    });
+});
+
+class NotEmptyBox extends Domain {
+    get props() {
+        return {
+            size: String,
+            thing: Thing
+        };
+    }
+    get rules() {
+        return {
+            thing: {
+                name: {
+                    value: {required: true, enum: ['valued']}
+                }
+            }
+        };
+    }
+}
+
+test('validate deep (two levels) error', t => {
+    const json = {};
+    const mapping = Mapping.map(NotEmptyBox).afterDecode(object => validate(object));
+
+    return mapping.decode(json)
+    .catch(error => {
+        t.is(error.message, 'should have required property \'thing\'');
+    });
+});
+
 class Gift extends Domain {
     get props() {
         return {
