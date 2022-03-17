@@ -41,6 +41,32 @@ test('assign, touched & schema', t => {
     t.is(touched.physical, undefined);
 });
 
+test('assign missing, touched & schema', t => {
+    const mask = Mask.cover(Thing).with({
+        size: true,
+        physical: true
+    });
+
+    const description = 'Adventure Playground';
+    const physical = true;
+
+    const thing = new Thing({});
+    const touched = mask.settle(
+        thing,
+        new Thing({name: 'overriden', description, physical})
+    );
+
+    t.is(thing.name, undefined);
+    t.is(thing.description, undefined);
+    t.is(thing.size, undefined);
+    t.is(thing.physical, physical);
+
+    t.true(touched.name);
+    t.true(touched.description);
+    t.is(touched.size, undefined);
+    t.is(touched.physical, undefined);
+});
+
 class Gift extends Domain {
     get props() {
         return {
@@ -194,9 +220,10 @@ test('assign empty deep, touched & schema', t => {
     const box = new Box();
     const touched = mask.settle(
         box,
-        new Box({thing: {physical}})
+        new Box({thing: new Thing({physical})})
     );
 
+    t.true(box.thing instanceof Thing);
     t.is(box.thing.name, undefined);
     t.is(box.thing.description, undefined);
     t.is(box.thing.size, undefined);
@@ -305,7 +332,7 @@ test('assign deep array, touched', t => {
     const boxes = new Boxes({things: [{name, description, physical: 'ignored'}, {name, description, physical: 'ignored'}]});
     const touched = mask.settle(
         boxes,
-        new Boxes({things: [{name: 'overriden', description, physical}, {name: 'overriden', description, physical}]})
+        new Boxes(({things: [new Thing({name: 'overriden', description, physical}), new Thing({name: 'overriden', description, physical})]}))
     );
 
     for (let i = 0; i < 2; i++) {
@@ -325,6 +352,29 @@ test('assign deep array, touched', t => {
     }
 });
 
+test('assign deep array, typed', t => {
+    const mask = Mask.cover(Boxes).with({
+        things: [{
+            physical: true
+        }]
+    });
+
+    const description = 'Adventure Playground';
+    const physical = true;
+
+    const boxes = new Boxes({things: []});
+    mask.settle(
+        boxes,
+        new Boxes(({things: [new Thing({name: 'overriden', description, physical})]}))
+    );
+
+    t.true(boxes.things[0] instanceof Thing);
+    t.is(boxes.things[0].name, undefined);
+    t.is(boxes.things[0].description, undefined);
+    t.is(boxes.things[0].size, undefined);
+    t.is(boxes.things[0].physical, physical);
+});
+
 test('assign deep array, untouched', t => {
     const mask = Mask.cover(Boxes).with({
         things: true
@@ -337,7 +387,32 @@ test('assign deep array, untouched', t => {
     const boxes = new Boxes({things: []});
     const touched = mask.settle(
         boxes,
-        new Boxes({things: [{name, description, physical}, {name, description, physical}]})
+        new Boxes({things: [new Thing({name, description, physical}), new Thing({name, description, physical})]})
+    );
+
+    for (let i = 0; i < 2; i++) {
+        t.is(boxes.things[i].name, name);
+        t.is(boxes.things[i].description, description);
+        t.is(boxes.things[i].size, undefined);
+        t.is(boxes.things[i].physical, physical);
+    }
+
+    t.is(touched.thing, undefined);
+});
+
+test('assign missing deep array, untouched', t => {
+    const mask = Mask.cover(Boxes).with({
+        things: true
+    });
+
+    const name = 'Shoes';
+    const description = 'Adventure Playground';
+    const physical = true;
+
+    const boxes = new Boxes({});
+    const touched = mask.settle(
+        boxes,
+        new Boxes({things: [new Thing({name, description, physical}), new Thing({name, description, physical})]})
     );
 
     for (let i = 0; i < 2; i++) {
