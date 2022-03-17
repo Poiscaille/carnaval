@@ -691,6 +691,48 @@ test('encode array through mapping & alias', t => {
     });
 });
 
+class UnreferencedBoxesWithin extends Domain {
+    get props() {
+        return {
+            size: Number,
+            things: [{
+                details: [{
+                    name: String
+                }]
+            }]
+        };
+    }
+}
+
+test('decode deeply and deeply through untyped mapping', t => {
+    const mapping = Mapping.map(UnreferencedBoxesWithin).with({
+        things: [{details: [{name: {alias: 'fullname'}}]}]
+    });
+    const json = {size: 40, things: [{details: [{fullname: 'Shoes'}, {fullname: 'Small'}]}, {details: [{fullname: 'Shirt'}, {fullname: 'Large'}]}]};
+
+    return mapping.decode(json).then(box => {
+        t.true(box instanceof UnreferencedBoxesWithin);
+        t.is(box.size, json.size);
+        t.true(box.things instanceof Array);
+        t.is(box.things[0].details[0].name, json.things[0].details[0].fullname);
+        t.is(box.things[1].details[1].name, json.things[1].details[1].fullname);
+    });
+});
+
+test('encode deeply and deeply through untyped mapping', t => {
+    const mapping = Mapping.map(UnreferencedBoxesWithin).with({
+        things: [{details: [{name: {alias: 'fullname'}}]}]
+    });
+    const box = new UnreferencedBoxesWithin({size: 40, things: [{details: [{name: 'Shoes'}, {name: 'Small'}]}, {details: [{name: 'Shirt'}, {name: 'Large'}]}]});
+
+    return mapping.encode(box).then(json => {
+        t.is(json.size, box.size);
+        t.true(json.things instanceof Array);
+        t.is(json.things[0].details[0].fullname, box.things[0].details[0].name);
+        t.is(json.things[1].details[1].fullname, box.things[1].details[1].name);
+    });
+});
+
 test('decode through mapping & hook', t => {
     const mapping = Mapping.map(Thing)
     .beforeDecode(json => {
