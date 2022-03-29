@@ -254,6 +254,54 @@ test('assign empty root deep, touched & schema', t => {
     t.is(touched.thing, undefined);
 });
 
+test('assign empty deeply, touched & schema', t => {
+    const mask = Mask.cover(Box).with({
+        thing: {
+            physical: true
+        }
+    });
+
+    const physical = true;
+
+    const box = new Box();
+    const touched = mask.settle(
+        box,
+        new Box({thing: new Thing({physical})})
+    );
+
+    t.true(box.thing instanceof Thing);
+    t.is(box.thing.name, undefined);
+    t.is(box.thing.description, undefined);
+    t.is(box.thing.size, undefined);
+    t.is(box.thing.physical, physical);
+
+    t.is(touched.thing, undefined);
+});
+
+test('assign empty tuned deeply, touched & schema', t => {
+    const mask = Mask.cover(Box).with({
+        thing: Mask.cover(Thing).with({
+            physical: true
+        })
+    });
+
+    const physical = true;
+
+    const box = new Box();
+    const touched = mask.settle(
+        box,
+        new Box({thing: new Thing({physical})})
+    );
+
+    t.true(box.thing instanceof Thing);
+    t.is(box.thing.name, undefined);
+    t.is(box.thing.description, undefined);
+    t.is(box.thing.size, undefined);
+    t.is(box.thing.physical, physical);
+
+    t.is(touched.thing, undefined);
+});
+
 class Shipping extends Domain {
     get props() {
         return {
@@ -363,7 +411,7 @@ test('assign deep array, typed', t => {
     const physical = true;
 
     const boxes = new Boxes({things: []});
-    mask.settle(
+    const touched = mask.settle(
         boxes,
         new Boxes(({things: [new Thing({name: 'overriden', description, physical})]}))
     );
@@ -373,6 +421,9 @@ test('assign deep array, typed', t => {
     t.is(boxes.things[0].description, undefined);
     t.is(boxes.things[0].size, undefined);
     t.is(boxes.things[0].physical, physical);
+
+    t.true(touched.things[0].name);
+    t.true(touched.things[0].description);
 });
 
 test('assign deep array, untouched', t => {
