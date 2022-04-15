@@ -400,6 +400,58 @@ test('assign deep array, touched', t => {
     }
 });
 
+test('assign deep array, touched (less)', t => {
+    const mask = Mask.cover(Boxes).with({
+        things: true
+    });
+
+    const name = 'Shoes';
+    const description = 'Adventure Playground';
+    const physical = true;
+
+    const boxes = new Boxes({things: [{name: 'ignored', description, size: 40, physical: 'ignored'}]});
+    const touched = mask.settle(
+        boxes,
+        new Boxes(({things: [new Thing({name, description, physical}), new Thing({name, description, physical})]}))
+    );
+
+    for (let i = 0; i < 2; i++) {
+        t.is(boxes.things[i].name, name);
+        t.is(boxes.things[i].description, description);
+        t.is(boxes.things[i].size, undefined);
+        t.is(boxes.things[i].physical, physical);
+    }
+
+    t.is(touched.things, undefined);
+});
+
+test('assign deep array, touched (more)', t => {
+    const mask = Mask.cover(Boxes).with({
+        things: true
+    });
+
+    const name = 'Shoes';
+    const description = 'Adventure Playground';
+    const physical = true;
+
+    const boxes = new Boxes({things: [{name: 'ignored', description, physical: 'ignored'}, {name: 'ignored', description, physical: 'ignored'}]});
+    const touched = mask.settle(
+        boxes,
+        new Boxes(({things: [new Thing({name, description, physical})]}))
+    );
+
+    t.is(boxes.things.length, 1);
+
+    for (let i = 0; i < 1; i++) {
+        t.is(boxes.things[i].name, name);
+        t.is(boxes.things[i].description, description);
+        t.is(boxes.things[i].size, undefined);
+        t.is(boxes.things[i].physical, physical);
+    }
+
+    t.is(touched.things, undefined);
+});
+
 test('assign deep array, typed', t => {
     const mask = Mask.cover(Boxes).with({
         things: [{
