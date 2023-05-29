@@ -83,7 +83,7 @@ class JSONSchema {
         return Object.assign({
             type: 'array',
             items: JSONSchema._toArrayItems(Type, rule)
-        }, omit(rule, 'required', ...Object.keys(props)));
+        }, omit(rule, 'required', 'enum', ...Object.keys(props)));
     }
     static _toArrayItems(Type, rule) {
         let items;

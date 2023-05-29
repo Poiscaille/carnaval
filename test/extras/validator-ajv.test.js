@@ -160,7 +160,7 @@ class Gift extends Domain {
     }
     get rules() {
         return {
-            names: {maxItems: 2}
+            names: {maxItems: 2, enum: ['Shoes', 'Shirt', '12']}
         };
     }
 }
@@ -212,6 +212,16 @@ test('validate array condition error', t => {
     return mapping.decode(json)
     .catch(error => {
         t.is(error.message, 'names should NOT have more than 2 items');
+    });
+});
+
+test('validate array content error', t => {
+    const json = {size: 'Medium', names: ['Shoe']};
+    const mapping = Mapping.map(Gift).afterDecode(object => validate(object));
+
+    return mapping.decode(json)
+    .catch(error => {
+        t.is(error.message, 'names/0 should be equal to one of the allowed values');
     });
 });
 
