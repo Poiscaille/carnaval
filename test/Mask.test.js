@@ -302,6 +302,45 @@ test('assign empty tuned deeply, touched & schema', t => {
     t.is(touched.thing, undefined);
 });
 
+class Garage extends Domain {
+    get props() {
+        return {
+            boxes: [{
+                thing: Thing
+            }]
+        };
+    }
+}
+
+test('assign empty array deeply, touched & schema', t => {
+    const mask = Mask.cover(Garage).except({
+        boxes: {
+            thing: {
+                name: false,
+                description: false,
+                size: false
+            }
+        }
+    });
+
+    const physical = true;
+
+    const garage = new Garage({boxes: []});
+    const touched = mask.settle(
+        garage,
+        new Garage({boxes: [{thing: new Thing({physical})}]})
+    );
+
+    t.is(garage.boxes.length, 1);
+    t.true(garage.boxes[0].thing instanceof Thing);
+    t.is(garage.boxes[0].thing.name, undefined);
+    t.is(garage.boxes[0].thing.description, undefined);
+    t.is(garage.boxes[0].thing.size, undefined);
+    t.is(garage.boxes[0].thing.physical, physical);
+
+    t.is(touched.boxes, undefined);
+});
+
 class Shipping extends Domain {
     get props() {
         return {
