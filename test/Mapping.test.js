@@ -516,6 +516,57 @@ test('decode deeply through mapping & transform', t => {
     });
 });
 
+test('decode deeply through mapping & transform, two conditions failed', t => {
+    const mapping = Mapping.map(UnreferencedBox).with({
+        thing: {
+            details: {
+                more: {
+                    set: (value, json) => value && json.size > 50
+                }
+            }
+        }
+    });
+    const json = {size: 40, thing: {name: 'Shoes', details: {more: 'invisible'}}};
+
+    return mapping.decode(json).then(box => {
+        t.is(box.thing.details.more, false);
+    });
+});
+
+test('decode deeply through mapping & transform, one condition failed', t => {
+    const mapping = Mapping.map(UnreferencedBox).with({
+        thing: {
+            details: {
+                more: {
+                    set: (value, json) => value && json.size > 50
+                }
+            }
+        }
+    });
+    const json = {size: 40, thing: {name: 'Shoes', details: {more: 'visible'}}};
+
+    return mapping.decode(json).then(box => {
+        t.is(box.thing.details.more, false);
+    });
+});
+
+test('decode deeply through mapping & transform, two conditions passed', t => {
+    const mapping = Mapping.map(UnreferencedBox).with({
+        thing: {
+            details: {
+                more: {
+                    set: (value, json) => value && json.size > 50
+                }
+            }
+        }
+    });
+    const json = {size: 60, thing: {name: 'Shoes', details: {more: 'visible'}}};
+
+    return mapping.decode(json).then(box => {
+        t.is(box.thing.details.more, true);
+    });
+});
+
 test('encode deeply through mapping & transform', t => {
     const mapping = Mapping.map(UnreferencedBox).with({
         thing: {
@@ -532,6 +583,57 @@ test('encode deeply through mapping & transform', t => {
         t.is(json.size, box.size);
         t.is(json.thing.name, box.thing.name);
         t.is(json.thing.details.more, 'invisible');
+    });
+});
+
+test('encode deeply through mapping & dependency transform, two conditions failed', t => {
+    const mapping = Mapping.map(UnreferencedBox).with({
+        thing: {
+            details: {
+                more: {
+                    get: (value, object) => value && object.size > 50 ? 'visible' : 'invisible'
+                }
+            }
+        }
+    });
+    const box = new UnreferencedBox({size: 40, thing: {name: 'Shoes', details: {more: false}}});
+
+    return mapping.encode(box).then(json => {
+        t.is(json.thing.details.more, 'invisible');
+    });
+});
+
+test('encode deeply through mapping & dependency transform, one condition failed', t => {
+    const mapping = Mapping.map(UnreferencedBox).with({
+        thing: {
+            details: {
+                more: {
+                    get: (value, object) => value && object.size > 50 ? 'visible' : 'invisible'
+                }
+            }
+        }
+    });
+    const box = new UnreferencedBox({size: 40, thing: {name: 'Shoes', details: {more: 'visible'}}});
+
+    return mapping.encode(box).then(json => {
+        t.is(json.thing.details.more, 'invisible');
+    });
+});
+
+test('encode deeply through mapping & dependency transform, two conditions passed', t => {
+    const mapping = Mapping.map(UnreferencedBox).with({
+        thing: {
+            details: {
+                more: {
+                    get: (value, object) => value && object.size > 50 ? 'visible' : 'invisible'
+                }
+            }
+        }
+    });
+    const box = new UnreferencedBox({size: 60, thing: {name: 'Shoes', details: {more: 'visible'}}});
+
+    return mapping.encode(box).then(json => {
+        t.is(json.thing.details.more, 'visible');
     });
 });
 

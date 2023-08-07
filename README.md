@@ -74,13 +74,13 @@ const mapping = Mapping.map(Friend).with({
 mapping.encode(new Friend({name: 'Joe', age: 27})).then(json => { /* {name: 'Joe'} */ });
 ```
 
-A mapping can transform some `props`.
+A mapping can transform some `props`; `set` is called when decoding to a class object, `get` is called when encoding from it. Both take the prop value as first parameter, and the full decoded / encoded object as second parameter.
 
 ```javascript
 const mapping = Mapping.map(Friend).with({
     name: {
-        set: value => value && value.trim(),
-        get: value => value && value.toUpperCase()
+        set: (value, json) => value && value.trim(),
+        get: (value, object) => value && value.toUpperCase()
     }
 });
 
