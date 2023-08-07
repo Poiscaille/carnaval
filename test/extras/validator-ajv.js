@@ -40,7 +40,8 @@ class JSONSchema {
             schema.properties[prop] = propSchema;
             
             const required = this._isPropRequired(rule);
-            if ((propSchema.required && propSchema.required.length) || required) {
+            const notRequired = rule.required === false;
+            if ((propSchema.required && propSchema.required.length && !notRequired) || required) {
                 schema.required.push(prop);
             }
         });
