@@ -233,6 +233,21 @@ describe("Mark", () => {
         expect(touched.thing).to.equal(undefined);
     });
 
+    it('assign deep with null, touched & schema', () => {
+        const mask = Mask.cover(Box).with({
+            thing: true
+        });
+
+        const box = new Box({thing: undefined});
+        const touched = mask.settle(
+            box,
+            new Box({thing: null})
+        );
+
+        expect(box.thing).to.equal(undefined);
+        expect(touched.thing).to.equal(undefined);
+    });
+
     it('assign empty deep, touched & schema', () => {
         const mask = Mask.cover(Box).with({
             thing: {
