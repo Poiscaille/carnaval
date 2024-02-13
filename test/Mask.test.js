@@ -209,6 +209,30 @@ describe("Mark", () => {
         expect(touched.thing.physical).to.equal(undefined);
     });
 
+    it('assign deep with zero, touched & schema', () => {
+        const mask = Mask.cover(Box).with({
+            thing: true
+        });
+
+        const name = 'Shoes';
+        const size = 0;
+        const description = 'Adventure Playground';
+        const physical = true;
+
+        const box = new Box({thing: undefined});
+        const touched = mask.settle(
+            box,
+            new Box({thing: {name, description, size, physical}})
+        );
+
+        expect(box.thing.name).to.equal(name);
+        expect(box.thing.description).to.equal(description);
+        expect(box.thing.size).to.equal(size);
+        expect(box.thing.physical).to.equal(physical);
+
+        expect(touched.thing).to.equal(undefined);
+    });
+
     it('assign empty deep, touched & schema', () => {
         const mask = Mask.cover(Box).with({
             thing: {
