@@ -1,4 +1,4 @@
-const test = require('ava');
+const {expect} = require('chai');
 
 const Mask = require('../lib/Mask');
 const Domain = require('../lib/Domain');
@@ -14,816 +14,818 @@ class Thing extends Domain {
     }
 }
 
-test('assign, touched & schema', t => {
-    const mask = Mask.cover(Thing).with({
-        size: true,
-        physical: true
+describe("Mark", () => {
+    it('assign, touched & schema', () => {
+        const mask = Mask.cover(Thing).with({
+            size: true,
+            physical: true
+        });
+
+        const name = 'Shoes';
+        const description = 'Adventure Playground';
+        const physical = true;
+
+        const thing = new Thing({name, size: 'ignored', physical: 'ignored'});
+        const touched = mask.settle(
+            thing,
+            new Thing({name: 'overriden', description, physical})
+        );
+
+        expect(thing.name).to.equal(name);
+        expect(thing.description).to.equal(undefined);
+        expect(thing.size).to.equal(undefined);
+        expect(thing.physical).to.equal(physical);
+
+        expect(touched.name).to.equal(true);
+        expect(touched.description).to.equal(true);
+        expect(touched.size).to.equal(undefined);
+        expect(touched.physical).to.equal(undefined);
     });
 
-    const name = 'Shoes';
-    const description = 'Adventure Playground';
-    const physical = true;
+    it('assign missing, touched & schema', () => {
+        const mask = Mask.cover(Thing).with({
+            size: true,
+            physical: true
+        });
 
-    const thing = new Thing({name, size: 'ignored', physical: 'ignored'});
-    const touched = mask.settle(
-        thing,
-        new Thing({name: 'overriden', description, physical})
-    );
+        const description = 'Adventure Playground';
+        const physical = true;
 
-    t.is(thing.name, name);
-    t.is(thing.description, undefined);
-    t.is(thing.size, undefined);
-    t.is(thing.physical, physical);
+        const thing = new Thing({});
+        const touched = mask.settle(
+            thing,
+            new Thing({name: 'overriden', description, physical})
+        );
 
-    t.true(touched.name);
-    t.true(touched.description);
-    t.is(touched.size, undefined);
-    t.is(touched.physical, undefined);
-});
+        expect(thing.name).to.equal(undefined);
+        expect(thing.description).to.equal(undefined);
+        expect(thing.size).to.equal(undefined);
+        expect(thing.physical).to.equal(physical);
 
-test('assign missing, touched & schema', t => {
-    const mask = Mask.cover(Thing).with({
-        size: true,
-        physical: true
+        expect(touched.name).to.equal(true);
+        expect(touched.description).to.equal(true);
+        expect(touched.size).to.equal(undefined);
+        expect(touched.physical).to.equal(undefined);
     });
 
-    const description = 'Adventure Playground';
-    const physical = true;
-
-    const thing = new Thing({});
-    const touched = mask.settle(
-        thing,
-        new Thing({name: 'overriden', description, physical})
-    );
-
-    t.is(thing.name, undefined);
-    t.is(thing.description, undefined);
-    t.is(thing.size, undefined);
-    t.is(thing.physical, physical);
-
-    t.true(touched.name);
-    t.true(touched.description);
-    t.is(touched.size, undefined);
-    t.is(touched.physical, undefined);
-});
-
-class Gift extends Domain {
-    get props() {
-        return {
-            names: [String]
-        };
+    class Gift extends Domain {
+        get props() {
+            return {
+                names: [String]
+            };
+        }
     }
-}
 
-test('assign array, touched (less)', t => {
-    const mask = Mask.cover(Gift);
+    it('assign array, touched (less)', () => {
+        const mask = Mask.cover(Gift);
 
-    const names = ['Shoes', 'Shirt', 'Jeans'];
+        const names = ['Shoes', 'Shirt', 'Jeans'];
 
-    const gift = new Gift({names});
-    const touched = mask.settle(
-        gift,
-        new Gift({names: ['Jeans', 'Shirt']})
-    );
+        const gift = new Gift({names});
+        const touched = mask.settle(
+            gift,
+            new Gift({names: ['Jeans', 'Shirt']})
+        );
 
-    t.deepEqual(gift.names, ['Shoes', 'Shirt', 'Jeans']);
-    t.deepEqual(touched.names, [true, false, true]);
-});
-
-test('assign array, touched (more)', t => {
-    const mask = Mask.cover(Gift);
-
-    const names = ['Shoes', 'Shirt'];
-
-    const gift = new Gift({names});
-    const touched = mask.settle(
-        gift,
-        new Gift({names: ['Jeans', 'Shirt', 'Jeans']})
-    );
-
-    t.deepEqual(gift.names, ['Shoes', 'Shirt']);
-    t.deepEqual(touched.names, [true, false]);
-});
-
-test('assign empty array, touched', t => {
-    const mask = Mask.cover(Gift);
-
-    const names = [];
-
-    const gift = new Gift({names});
-    const touched = mask.settle(
-        gift,
-        new Gift({names: ['Jeans', 'Shirt', 'Jeans']})
-    );
-
-    t.deepEqual(gift.names, []);
-    t.deepEqual(touched.names, []);
-});
-
-test('assign array, untouched', t => {
-    const mask = Mask.cover(Gift).with({
-        names: true
+        expect(gift.names).to.deep.equal(['Shoes', 'Shirt', 'Jeans']);
+        expect(touched.names).to.deep.equal([true, false, true]);
     });
 
-    const names = [];
+    it('assign array, touched (more)', () => {
+        const mask = Mask.cover(Gift);
 
-    const gift = new Gift({names});
-    const touched = mask.settle(
-        gift,
-        new Gift({names: ['Jeans', 'Shirt', 'Jeans']})
-    );
+        const names = ['Shoes', 'Shirt'];
 
-    t.deepEqual(gift.names, ['Jeans', 'Shirt', 'Jeans']);
-    t.deepEqual(touched.names, undefined);
-});
+        const gift = new Gift({names});
+        const touched = mask.settle(
+            gift,
+            new Gift({names: ['Jeans', 'Shirt', 'Jeans']})
+        );
 
-test('assign array, touched & schema', t => {
-    const mask = Mask.cover(Gift).with({
-        names: true
+        expect(gift.names).to.deep.equal(['Shoes', 'Shirt']);
+        expect(touched.names).to.deep.equal([true, false]);
     });
 
-    const names = ['Shoes', 'Shirt', 'Jeans'];
+    it('assign empty array, touched', () => {
+        const mask = Mask.cover(Gift);
 
-    const gift = new Gift({names});
-    const touched = mask.settle(
-        gift,
-        new Gift({names: ['Jeans', 'Shirt']})
-    );
+        const names = [];
 
-    t.deepEqual(gift.names, ['Jeans', 'Shirt']);
-    t.is(touched.names, undefined);
-});
+        const gift = new Gift({names});
+        const touched = mask.settle(
+            gift,
+            new Gift({names: ['Jeans', 'Shirt', 'Jeans']})
+        );
 
-test('assign empty array, touched & schema', t => {
-    const mask = Mask.cover(Gift).with({
-        names: true
+        expect(gift.names).to.deep.equal([]);
+        expect(touched.names).to.deep.equal([]);
     });
 
-    const names = ['Shoes', 'Shirt', 'Jeans'];
+    it('assign array, untouched', () => {
+        const mask = Mask.cover(Gift).with({
+            names: true
+        });
 
-    const gift = new Gift({names});
-    const touched = mask.settle(
-        gift,
-        new Gift({names: []})
-    );
+        const names = [];
 
-    t.deepEqual(gift.names, []);
-    t.is(touched.names, undefined);
-});
+        const gift = new Gift({names});
+        const touched = mask.settle(
+            gift,
+            new Gift({names: ['Jeans', 'Shirt', 'Jeans']})
+        );
 
-class Box extends Domain {
-    get props() {
-        return {
-            thing: Thing
-        };
-    }
-}
-
-test('assign deep, touched & schema', t => {
-    const mask = Mask.cover(Box).with({
-        thing: {
-            physical: true
-        }
+        expect(gift.names).to.deep.equal(['Jeans', 'Shirt', 'Jeans']);
+        expect(touched.names).to.deep.equal(undefined);
     });
 
-    const name = 'Shoes';
-    const size = 40;
-    const description = 'Adventure Playground';
-    const physical = true;
+    it('assign array, touched & schema', () => {
+        const mask = Mask.cover(Gift).with({
+            names: true
+        });
 
-    const box = new Box({thing: {name, description, size, physical: 'ignored'}});
-    const touched = mask.settle(
-        box,
-        new Box({thing: {name: 'overriden', description, physical}})
-    );
+        const names = ['Shoes', 'Shirt', 'Jeans'];
 
-    t.is(box.thing.name, name);
-    t.is(box.thing.description, description);
-    t.is(box.thing.size, size);
-    t.is(box.thing.physical, physical);
+        const gift = new Gift({names});
+        const touched = mask.settle(
+            gift,
+            new Gift({names: ['Jeans', 'Shirt']})
+        );
 
-    t.true(touched.thing.name);
-    t.is(touched.thing.description, undefined);
-    t.true(touched.thing.size);
-    t.is(touched.thing.physical, undefined);
-});
-
-test('assign empty deep, touched & schema', t => {
-    const mask = Mask.cover(Box).with({
-        thing: {
-            physical: true
-        }
+        expect(gift.names).to.deep.equal(['Jeans', 'Shirt']);
+        expect(touched.names).to.equal(undefined);
     });
 
-    const physical = true;
+    it('assign empty array, touched & schema', () => {
+        const mask = Mask.cover(Gift).with({
+            names: true
+        });
 
-    const box = new Box();
-    const touched = mask.settle(
-        box,
-        new Box({thing: new Thing({physical})})
-    );
+        const names = ['Shoes', 'Shirt', 'Jeans'];
 
-    t.true(box.thing instanceof Thing);
-    t.is(box.thing.name, undefined);
-    t.is(box.thing.description, undefined);
-    t.is(box.thing.size, undefined);
-    t.is(box.thing.physical, physical);
+        const gift = new Gift({names});
+        const touched = mask.settle(
+            gift,
+            new Gift({names: []})
+        );
 
-    t.is(touched.thing, undefined);
-});
-
-test('assign empty root deep, touched & schema', t => {
-    const mask = Mask.cover(Box).with({
-        thing: true
+        expect(gift.names).to.deep.equal([]);
+        expect(touched.names).to.equal(undefined);
     });
 
-    const physical = true;
-
-    const box = new Box();
-    const touched = mask.settle(
-        box,
-        new Box({thing: {physical}})
-    );
-
-    t.is(box.thing.name, undefined);
-    t.is(box.thing.description, undefined);
-    t.is(box.thing.size, undefined);
-    t.is(box.thing.physical, physical);
-    t.true(box.thing instanceof Thing);
-
-    t.is(touched.thing, undefined);
-});
-
-test('assign empty deeply, touched & schema', t => {
-    const mask = Mask.cover(Box).with({
-        thing: {
-            physical: true
-        }
-    });
-
-    const physical = true;
-
-    const box = new Box();
-    const touched = mask.settle(
-        box,
-        new Box({thing: new Thing({physical})})
-    );
-
-    t.true(box.thing instanceof Thing);
-    t.is(box.thing.name, undefined);
-    t.is(box.thing.description, undefined);
-    t.is(box.thing.size, undefined);
-    t.is(box.thing.physical, physical);
-
-    t.is(touched.thing, undefined);
-});
-
-test('assign empty tuned deeply, touched & schema', t => {
-    const mask = Mask.cover(Box).with({
-        thing: Mask.cover(Thing).with({
-            physical: true
-        })
-    });
-
-    const physical = true;
-
-    const box = new Box();
-    const touched = mask.settle(
-        box,
-        new Box({thing: new Thing({physical})})
-    );
-
-    t.true(box.thing instanceof Thing);
-    t.is(box.thing.name, undefined);
-    t.is(box.thing.description, undefined);
-    t.is(box.thing.size, undefined);
-    t.is(box.thing.physical, physical);
-
-    t.is(touched.thing, undefined);
-});
-
-class Garage extends Domain {
-    get props() {
-        return {
-            boxes: [{
+    class Box extends Domain {
+        get props() {
+            return {
                 thing: Thing
-            }]
-        };
+            };
+        }
     }
-}
 
-test('assign empty array deeply, touched & schema', t => {
-    const mask = Mask.cover(Garage).except({
-        boxes: {
+    it('assign deep, touched & schema', () => {
+        const mask = Mask.cover(Box).with({
             thing: {
-                name: false,
-                description: false,
-                size: false
+                physical: true
             }
-        }
+        });
+
+        const name = 'Shoes';
+        const size = 40;
+        const description = 'Adventure Playground';
+        const physical = true;
+
+        const box = new Box({thing: {name, description, size, physical: 'ignored'}});
+        const touched = mask.settle(
+            box,
+            new Box({thing: {name: 'overriden', description, physical}})
+        );
+
+        expect(box.thing.name).to.equal(name);
+        expect(box.thing.description).to.equal(description);
+        expect(box.thing.size).to.equal(size);
+        expect(box.thing.physical).to.equal(physical);
+
+        expect(touched.thing.name).to.equal(true);
+        expect(touched.thing.description).to.equal(undefined);
+        expect(touched.thing.size).to.equal(true);
+        expect(touched.thing.physical).to.equal(undefined);
     });
 
-    const physical = true;
-
-    const garage = new Garage({boxes: []});
-    const touched = mask.settle(
-        garage,
-        new Garage({boxes: [{thing: new Thing({physical})}]})
-    );
-
-    t.is(garage.boxes.length, 1);
-    t.true(garage.boxes[0].thing instanceof Thing);
-    t.is(garage.boxes[0].thing.name, undefined);
-    t.is(garage.boxes[0].thing.description, undefined);
-    t.is(garage.boxes[0].thing.size, undefined);
-    t.is(garage.boxes[0].thing.physical, physical);
-
-    t.is(touched.boxes, undefined);
-});
-
-class Shipping extends Domain {
-    get props() {
-        return {
-            box: Box
-        };
-    }
-}
-
-test('assign double empty deep, touched & schema', t => {
-    const mask = Mask.cover(Shipping).with({
-        box: {
+    it('assign empty deep, touched & schema', () => {
+        const mask = Mask.cover(Box).with({
             thing: {
-                size: true
+                physical: true
             }
+        });
+
+        const physical = true;
+
+        const box = new Box();
+        const touched = mask.settle(
+            box,
+            new Box({thing: new Thing({physical})})
+        );
+
+        expect(box.thing instanceof Thing).to.equal(true);
+        expect(box.thing.name).to.equal(undefined);
+        expect(box.thing.description).to.equal(undefined);
+        expect(box.thing.size).to.equal(undefined);
+        expect(box.thing.physical).to.equal(physical);
+
+        expect(touched.thing).to.equal(undefined);
+    });
+
+    it('assign empty root deep, touched & schema', () => {
+        const mask = Mask.cover(Box).with({
+            thing: true
+        });
+
+        const physical = true;
+
+        const box = new Box();
+        const touched = mask.settle(
+            box,
+            new Box({thing: {physical}})
+        );
+
+        expect(box.thing.name).to.equal(undefined);
+        expect(box.thing.description).to.equal(undefined);
+        expect(box.thing.size).to.equal(undefined);
+        expect(box.thing.physical).to.equal(physical);
+        expect(box.thing instanceof Thing).to.equal(true);
+
+        expect(touched.thing).to.equal(undefined);
+    });
+
+    it('assign empty deeply, touched & schema', () => {
+        const mask = Mask.cover(Box).with({
+            thing: {
+                physical: true
+            }
+        });
+
+        const physical = true;
+
+        const box = new Box();
+        const touched = mask.settle(
+            box,
+            new Box({thing: new Thing({physical})})
+        );
+
+        expect(box.thing instanceof Thing).to.equal(true);
+        expect(box.thing.name).to.equal(undefined);
+        expect(box.thing.description).to.equal(undefined);
+        expect(box.thing.size).to.equal(undefined);
+        expect(box.thing.physical).to.equal(physical);
+
+        expect(touched.thing).to.equal(undefined);
+    });
+
+    it('assign empty tuned deeply, touched & schema', () => {
+        const mask = Mask.cover(Box).with({
+            thing: Mask.cover(Thing).with({
+                physical: true
+            })
+        });
+
+        const physical = true;
+
+        const box = new Box();
+        const touched = mask.settle(
+            box,
+            new Box({thing: new Thing({physical})})
+        );
+
+        expect(box.thing instanceof Thing).to.equal(true);
+        expect(box.thing.name).to.equal(undefined);
+        expect(box.thing.description).to.equal(undefined);
+        expect(box.thing.size).to.equal(undefined);
+        expect(box.thing.physical).to.equal(physical);
+
+        expect(touched.thing).to.equal(undefined);
+    });
+
+    class Garage extends Domain {
+        get props() {
+            return {
+                boxes: [{
+                    thing: Thing
+                }]
+            };
         }
+    }
+
+    it('assign empty array deeply, touched & schema', () => {
+        const mask = Mask.cover(Garage).except({
+            boxes: {
+                thing: {
+                    name: false,
+                    description: false,
+                    size: false
+                }
+            }
+        });
+
+        const physical = true;
+
+        const garage = new Garage({boxes: []});
+        const touched = mask.settle(
+            garage,
+            new Garage({boxes: [{thing: new Thing({physical})}]})
+        );
+
+        expect(garage.boxes.length).to.equal(1);
+        expect(garage.boxes[0].thing instanceof Thing).to.equal(true);
+        expect(garage.boxes[0].thing.name).to.equal(undefined);
+        expect(garage.boxes[0].thing.description).to.equal(undefined);
+        expect(garage.boxes[0].thing.size).to.equal(undefined);
+        expect(garage.boxes[0].thing.physical).to.equal(physical);
+
+        expect(touched.boxes).to.equal(undefined);
     });
 
-    const shipping = new Shipping();
-    const touched = mask.settle(
-        shipping,
-        new Shipping()
-    );
-
-    t.is(shipping.box, undefined);
-    t.is(touched.box, undefined);
-});
-
-class UnknownBox extends Domain {
-    get props() {
-        return {
-            thing: Object
-        };
-    }
-}
-
-test('assign empty class tree, touched & schema', t => {
-    const mask = Mask.cover(UnknownBox).with({
-        thing: {
-            name: true
+    class Shipping extends Domain {
+        get props() {
+            return {
+                box: Box
+            };
         }
+    }
+
+    it('assign double empty deep, touched & schema', () => {
+        const mask = Mask.cover(Shipping).with({
+            box: {
+                thing: {
+                    size: true
+                }
+            }
+        });
+
+        const shipping = new Shipping();
+        const touched = mask.settle(
+            shipping,
+            new Shipping()
+        );
+
+        expect(shipping.box).to.equal(undefined);
+        expect(touched.box).to.equal(undefined);
     });
 
-    const name = 'Shoes';
-
-    const box = new UnknownBox();
-    const touched = mask.settle(
-        box,
-        new UnknownBox({thing: {name}})
-    );
-
-    t.is(box.thing.name, name);
-    t.is(box.thing.size, undefined);
-
-    t.is(touched.thing, undefined);
-});
-
-class Boxes extends Domain {
-    get props() {
-        return {
-            things: [Thing]
-        };
+    class UnknownBox extends Domain {
+        get props() {
+            return {
+                thing: Object
+            };
+        }
     }
-}
 
-test('assign deep array, touched', t => {
-    const mask = Mask.cover(Boxes).with({
-        things: [{
-            physical: true
-        }]
+    it('assign empty class tree, touched & schema', () => {
+        const mask = Mask.cover(UnknownBox).with({
+            thing: {
+                name: true
+            }
+        });
+
+        const name = 'Shoes';
+
+        const box = new UnknownBox();
+        const touched = mask.settle(
+            box,
+            new UnknownBox({thing: {name}})
+        );
+
+        expect(box.thing.name).to.equal(name);
+        expect(box.thing.size).to.equal(undefined);
+
+        expect(touched.thing).to.equal(undefined);
     });
 
-    const name = 'Shoes';
-    const description = 'Adventure Playground';
-    const physical = true;
-
-    const boxes = new Boxes({things: [{name, description, physical: 'ignored'}, {name, description, physical: 'ignored'}]});
-    const touched = mask.settle(
-        boxes,
-        new Boxes(({things: [new Thing({name: 'overriden', description, physical}), new Thing({name: 'overriden', description, physical})]}))
-    );
-
-    for (let i = 0; i < 2; i++) {
-        t.is(boxes.things[i].name, name);
-        t.is(boxes.things[i].description, description);
-        t.is(boxes.things[i].size, undefined);
-        t.is(boxes.things[i].physical, physical);
+    class Boxes extends Domain {
+        get props() {
+            return {
+                things: [Thing]
+            };
+        }
     }
 
-    t.is(touched.things.length, 2);
-
-    for (let i = 0; i < 2; i++) {
-        t.true(touched.things[i].name);
-        t.is(touched.things[i].description, undefined);
-        t.is(touched.things[i].size, undefined);
-        t.is(touched.things[i].physical, undefined);
-    }
-});
-
-test('assign deep array, touched (less)', t => {
-    const mask = Mask.cover(Boxes).with({
-        things: true
-    });
-
-    const name = 'Shoes';
-    const description = 'Adventure Playground';
-    const physical = true;
-
-    const boxes = new Boxes({things: [{name: 'ignored', description, size: 40, physical: 'ignored'}]});
-    const touched = mask.settle(
-        boxes,
-        new Boxes(({things: [new Thing({name, description, physical}), new Thing({name, description, physical})]}))
-    );
-
-    for (let i = 0; i < 2; i++) {
-        t.is(boxes.things[i].name, name);
-        t.is(boxes.things[i].description, description);
-        t.is(boxes.things[i].size, undefined);
-        t.is(boxes.things[i].physical, physical);
-    }
-
-    t.is(touched.things, undefined);
-});
-
-test('assign deep array, touched (more)', t => {
-    const mask = Mask.cover(Boxes).with({
-        things: true
-    });
-
-    const name = 'Shoes';
-    const description = 'Adventure Playground';
-    const physical = true;
-
-    const boxes = new Boxes({things: [{name: 'ignored', description, physical: 'ignored'}, {name: 'ignored', description, physical: 'ignored'}]});
-    const touched = mask.settle(
-        boxes,
-        new Boxes(({things: [new Thing({name, description, physical})]}))
-    );
-
-    t.is(boxes.things.length, 1);
-
-    for (let i = 0; i < 1; i++) {
-        t.is(boxes.things[i].name, name);
-        t.is(boxes.things[i].description, description);
-        t.is(boxes.things[i].size, undefined);
-        t.is(boxes.things[i].physical, physical);
-    }
-
-    t.is(touched.things, undefined);
-});
-
-test('assign deep array, typed', t => {
-    const mask = Mask.cover(Boxes).with({
-        things: [{
-            physical: true
-        }]
-    });
-
-    const description = 'Adventure Playground';
-    const physical = true;
-
-    const boxes = new Boxes({things: []});
-    const touched = mask.settle(
-        boxes,
-        new Boxes(({things: [new Thing({name: 'overriden', description, physical})]}))
-    );
-
-    t.true(boxes.things[0] instanceof Thing);
-    t.is(boxes.things[0].name, undefined);
-    t.is(boxes.things[0].description, undefined);
-    t.is(boxes.things[0].size, undefined);
-    t.is(boxes.things[0].physical, physical);
-
-    t.true(touched.things[0].name);
-    t.true(touched.things[0].description);
-});
-
-test('assign deep array, untouched', t => {
-    const mask = Mask.cover(Boxes).with({
-        things: true
-    });
-
-    const name = 'Shoes';
-    const description = 'Adventure Playground';
-    const physical = true;
-
-    const boxes = new Boxes({things: []});
-    const touched = mask.settle(
-        boxes,
-        new Boxes({things: [new Thing({name, description, physical}), new Thing({name, description, physical})]})
-    );
-
-    for (let i = 0; i < 2; i++) {
-        t.is(boxes.things[i].name, name);
-        t.is(boxes.things[i].description, description);
-        t.is(boxes.things[i].size, undefined);
-        t.is(boxes.things[i].physical, physical);
-    }
-
-    t.is(touched.thing, undefined);
-});
-
-test('assign missing deep array, untouched', t => {
-    const mask = Mask.cover(Boxes).with({
-        things: true
-    });
-
-    const name = 'Shoes';
-    const description = 'Adventure Playground';
-    const physical = true;
-
-    const boxes = new Boxes({});
-    const touched = mask.settle(
-        boxes,
-        new Boxes({things: [new Thing({name, description, physical}), new Thing({name, description, physical})]})
-    );
-
-    for (let i = 0; i < 2; i++) {
-        t.is(boxes.things[i].name, name);
-        t.is(boxes.things[i].description, description);
-        t.is(boxes.things[i].size, undefined);
-        t.is(boxes.things[i].physical, physical);
-    }
-
-    t.is(touched.thing, undefined);
-});
-
-class Cart extends Domain {
-    get props() {
-        return {
-            gifts: [Gift]
-        };
-    }
-}
-
-test('assign deep array within array, touched (less)', t => {
-    const mask = Mask.cover(Cart);
-
-    const names = ['Shoes', 'Shirt', 'Jeans'];
-
-    const cart = new Cart({gifts: [new Gift({names}), new Gift({names})]});
-    const touched = mask.settle(
-        cart,
-        new Cart({gifts: [new Gift({names: ['Jeans', 'Shirt']})]})
-    );
-
-    t.deepEqual(cart.gifts[0].names, ['Shoes', 'Shirt', 'Jeans']);
-    t.deepEqual(cart.gifts[1].names, ['Shoes', 'Shirt', 'Jeans']);
-    t.deepEqual(touched.gifts[0].names, [true, false, true]);
-    t.deepEqual(touched.gifts[1].names, [true, true, true]);
-});
-
-class UnreferencedBoxes extends Domain {
-    get props() {
-        return {
+    it('assign deep array, touched', () => {
+        const mask = Mask.cover(Boxes).with({
             things: [{
-                name: String,
-                size: Boolean,
+                physical: true
+            }]
+        });
+
+        const name = 'Shoes';
+        const description = 'Adventure Playground';
+        const physical = true;
+
+        const boxes = new Boxes({things: [{name, description, physical: 'ignored'}, {name, description, physical: 'ignored'}]});
+        const touched = mask.settle(
+            boxes,
+            new Boxes(({things: [new Thing({name: 'overriden', description, physical}), new Thing({name: 'overriden', description, physical})]}))
+        );
+
+        for (let i = 0; i < 2; i++) {
+            expect(boxes.things[i].name).to.equal(name);
+            expect(boxes.things[i].description).to.equal(description);
+            expect(boxes.things[i].size).to.equal(undefined);
+            expect(boxes.things[i].physical).to.equal(physical);
+        }
+
+        expect(touched.things.length).to.equal(2);
+
+        for (let i = 0; i < 2; i++) {
+            expect(touched.things[i].name).to.equal(true);
+            expect(touched.things[i].description).to.equal(undefined);
+            expect(touched.things[i].size).to.equal(undefined);
+            expect(touched.things[i].physical).to.equal(undefined);
+        }
+    });
+
+    it('assign deep array, touched (less)', () => {
+        const mask = Mask.cover(Boxes).with({
+            things: true
+        });
+
+        const name = 'Shoes';
+        const description = 'Adventure Playground';
+        const physical = true;
+
+        const boxes = new Boxes({things: [{name: 'ignored', description, size: 40, physical: 'ignored'}]});
+        const touched = mask.settle(
+            boxes,
+            new Boxes(({things: [new Thing({name, description, physical}), new Thing({name, description, physical})]}))
+        );
+
+        for (let i = 0; i < 2; i++) {
+            expect(boxes.things[i].name).to.equal(name);
+            expect(boxes.things[i].description).to.equal(description);
+            expect(boxes.things[i].size).to.equal(undefined);
+            expect(boxes.things[i].physical).to.equal(physical);
+        }
+
+        expect(touched.things).to.equal(undefined);
+    });
+
+    it('assign deep array, touched (more)', () => {
+        const mask = Mask.cover(Boxes).with({
+            things: true
+        });
+
+        const name = 'Shoes';
+        const description = 'Adventure Playground';
+        const physical = true;
+
+        const boxes = new Boxes({things: [{name: 'ignored', description, physical: 'ignored'}, {name: 'ignored', description, physical: 'ignored'}]});
+        const touched = mask.settle(
+            boxes,
+            new Boxes(({things: [new Thing({name, description, physical})]}))
+        );
+
+        expect(boxes.things.length).to.equal(1);
+
+        for (let i = 0; i < 1; i++) {
+            expect(boxes.things[i].name).to.equal(name);
+            expect(boxes.things[i].description).to.equal(description);
+            expect(boxes.things[i].size).to.equal(undefined);
+            expect(boxes.things[i].physical).to.equal(physical);
+        }
+
+        expect(touched.things).to.equal(undefined);
+    });
+
+    it('assign deep array, typed', () => {
+        const mask = Mask.cover(Boxes).with({
+            things: [{
+                physical: true
+            }]
+        });
+
+        const description = 'Adventure Playground';
+        const physical = true;
+
+        const boxes = new Boxes({things: []});
+        const touched = mask.settle(
+            boxes,
+            new Boxes(({things: [new Thing({name: 'overriden', description, physical})]}))
+        );
+
+        expect(boxes.things[0] instanceof Thing).to.equal(true);
+        expect(boxes.things[0].name).to.equal(undefined);
+        expect(boxes.things[0].description).to.equal(undefined);
+        expect(boxes.things[0].size).to.equal(undefined);
+        expect(boxes.things[0].physical).to.equal(physical);
+
+        expect(touched.things[0].name).to.equal(true);
+        expect(touched.things[0].description).to.equal(true);
+    });
+
+    it('assign deep array, untouched', () => {
+        const mask = Mask.cover(Boxes).with({
+            things: true
+        });
+
+        const name = 'Shoes';
+        const description = 'Adventure Playground';
+        const physical = true;
+
+        const boxes = new Boxes({things: []});
+        const touched = mask.settle(
+            boxes,
+            new Boxes({things: [new Thing({name, description, physical}), new Thing({name, description, physical})]})
+        );
+
+        for (let i = 0; i < 2; i++) {
+            expect(boxes.things[i].name).to.equal(name);
+            expect(boxes.things[i].description).to.equal(description);
+            expect(boxes.things[i].size).to.equal(undefined);
+            expect(boxes.things[i].physical).to.equal(physical);
+        }
+
+        expect(touched.thing).to.equal(undefined);
+    });
+
+    it('assign missing deep array, untouched', () => {
+        const mask = Mask.cover(Boxes).with({
+            things: true
+        });
+
+        const name = 'Shoes';
+        const description = 'Adventure Playground';
+        const physical = true;
+
+        const boxes = new Boxes({});
+        const touched = mask.settle(
+            boxes,
+            new Boxes({things: [new Thing({name, description, physical}), new Thing({name, description, physical})]})
+        );
+
+        for (let i = 0; i < 2; i++) {
+            expect(boxes.things[i].name).to.equal(name);
+            expect(boxes.things[i].description).to.equal(description);
+            expect(boxes.things[i].size).to.equal(undefined);
+            expect(boxes.things[i].physical).to.equal(physical);
+        }
+
+        expect(touched.thing).to.equal(undefined);
+    });
+
+    class Cart extends Domain {
+        get props() {
+            return {
+                gifts: [Gift]
+            };
+        }
+    }
+
+    it('assign deep array within array, touched (less)', () => {
+        const mask = Mask.cover(Cart);
+
+        const names = ['Shoes', 'Shirt', 'Jeans'];
+
+        const cart = new Cart({gifts: [new Gift({names}), new Gift({names})]});
+        const touched = mask.settle(
+            cart,
+            new Cart({gifts: [new Gift({names: ['Jeans', 'Shirt']})]})
+        );
+
+        expect(cart.gifts[0].names).to.deep.equal(['Shoes', 'Shirt', 'Jeans']);
+        expect(cart.gifts[1].names).to.deep.equal(['Shoes', 'Shirt', 'Jeans']);
+        expect(touched.gifts[0].names).to.deep.equal([true, false, true]);
+        expect(touched.gifts[1].names).to.deep.equal([true, true, true]);
+    });
+
+    class UnreferencedBoxes extends Domain {
+        get props() {
+            return {
+                things: [{
+                    name: String,
+                    size: Boolean,
+                    details: {
+                        more: Boolean,
+                        less: Boolean
+                    }
+                }]
+            };
+        }
+    }
+
+    it('assign class tree array, touched & schema', () => {
+        const mask = Mask.cover(UnreferencedBoxes).with({
+            things: [{
+                size: true,
                 details: {
-                    more: Boolean,
-                    less: Boolean
+                    less: true
                 }
             }]
-        };
-    }
-}
+        });
 
-test('assign class tree array, touched & schema', t => {
-    const mask = Mask.cover(UnreferencedBoxes).with({
-        things: [{
-            size: true,
-            details: {
-                less: true
-            }
-        }]
+        const name = 'Shoes';
+
+        const boxes = new UnreferencedBoxes({things: [{name, size: 'ignored', details: {more: true, less: true}}, {name, size: 'ignored', details: {more: true, less: true}}]});
+        const touched = mask.settle(
+            boxes,
+            new UnreferencedBoxes({things: [{name: 'overriden', details: {more: false, less: false}}, {name: 'overriden', details: {more: false, less: false}}]})
+        );
+
+        for (let i = 0; i < 2; i++) {
+            expect(boxes.things[i].name).to.equal(name);
+            expect(boxes.things[i].size).to.equal(undefined);
+            expect(boxes.things[i].details.more).to.equal(true);
+            expect(boxes.things[i].details.less).to.equal(false);
+        }
+
+        expect(touched.things.length).to.equal(2);
+
+        for (let i = 0; i < 2; i++) {
+            expect(touched.things[i].name).to.equal(true);
+            expect(touched.things[i].size).to.equal(undefined);
+            expect(touched.things[i].details.more).to.equal(true);
+            expect(touched.things[i].details.less).to.equal(undefined);
+        }
     });
 
-    const name = 'Shoes';
+    it('assign deep mask, touched & schema', () => {
+        const mask = Mask.cover(Box).with({
+            thing: Mask.cover(Thing).with({
+                physical: true
+            })
+        });
 
-    const boxes = new UnreferencedBoxes({things: [{name, size: 'ignored', details: {more: true, less: true}}, {name, size: 'ignored', details: {more: true, less: true}}]});
-    const touched = mask.settle(
-        boxes,
-        new UnreferencedBoxes({things: [{name: 'overriden', details: {more: false, less: false}}, {name: 'overriden', details: {more: false, less: false}}]})
-    );
+        const name = 'Shoes';
+        const size = 40;
+        const description = 'Adventure Playground';
+        const physical = true;
 
-    for (let i = 0; i < 2; i++) {
-        t.is(boxes.things[i].name, name);
-        t.is(boxes.things[i].size, undefined);
-        t.true(boxes.things[i].details.more);
-        t.false(boxes.things[i].details.less);
-    }
+        const box = new Box({thing: {name, description, size, physical: 'ignored'}});
+        const touched = mask.settle(
+            box,
+            new Box({thing: {name: 'overriden', description, physical}})
+        );
 
-    t.is(touched.things.length, 2);
+        expect(box.thing.name).to.equal(name);
+        expect(box.thing.description).to.equal(description);
+        expect(box.thing.size).to.equal(size);
+        expect(box.thing.physical).to.equal(physical);
 
-    for (let i = 0; i < 2; i++) {
-        t.true(touched.things[i].name);
-        t.is(touched.things[i].size, undefined);
-        t.true(touched.things[i].details.more);
-        t.is(touched.things[i].details.less, undefined);
-    }
-});
-
-test('assign deep mask, touched & schema', t => {
-    const mask = Mask.cover(Box).with({
-        thing: Mask.cover(Thing).with({
-            physical: true
-        })
+        expect(touched.thing.name).to.equal(true);
+        expect(touched.thing.description).to.equal(undefined);
+        expect(touched.thing.size).to.equal(true);
+        expect(touched.thing.physical).to.equal(undefined);
     });
 
-    const name = 'Shoes';
-    const size = 40;
-    const description = 'Adventure Playground';
-    const physical = true;
+    it('domain cover props', () => {
+        const mask = Mask.cover(Thing).except();
+        
+        const name = 'Shoes';
 
-    const box = new Box({thing: {name, description, size, physical: 'ignored'}});
-    const touched = mask.settle(
-        box,
-        new Box({thing: {name: 'overriden', description, physical}})
-    );
+        const thing = new Thing({name: 'ignored'});
+        mask.settle(thing, new Thing({name: name}));
+        
+        expect(thing.name).to.equal(name);
+    });
 
-    t.is(box.thing.name, name);
-    t.is(box.thing.description, description);
-    t.is(box.thing.size, size);
-    t.is(box.thing.physical, physical);
+    it('domain cover & omit props', () => {
+        const mask = Mask.cover(Thing).except({name: false});
+        
+        const name = 'Shoes';
 
-    t.true(touched.thing.name);
-    t.is(touched.thing.description, undefined);
-    t.true(touched.thing.size);
-    t.is(touched.thing.physical, undefined);
-});
+        const thing = new Thing({name: name});
+        mask.settle(thing, new Thing({name: 'overriden'}));
+        
+        expect(thing.name).to.equal(name);
+    });
 
-test('domain cover props', t => {
-    const mask = Mask.cover(Thing).except();
-    
-    const name = 'Shoes';
+    it('domain cover deep props', () => {
+        const mask = Mask.cover(Box).except();
+        
+        const name = 'Shoes';
 
-    const thing = new Thing({name: 'ignored'});
-    mask.settle(thing, new Thing({name: name}));
-    
-    t.is(thing.name, name);
-});
+        const box = new Box({thing: {name: 'ignored'}});
+        mask.settle(box, new Box({thing: {name: name}}));
+        
+        expect(box.thing.name).to.equal(name);
+    });
 
-test('domain cover & omit props', t => {
-    const mask = Mask.cover(Thing).except({name: false});
-    
-    const name = 'Shoes';
+    it('domain cover & omit deep props', () => {
+        const mask = Mask.cover(Box).except({thing: {name: false}});
+        
+        const name = 'Shoes';
 
-    const thing = new Thing({name: name});
-    mask.settle(thing, new Thing({name: 'overriden'}));
-    
-    t.is(thing.name, name);
-});
+        const box = new Box({thing: {name: name}});
+        mask.settle(box, new Box({thing: {name: 'overriden'}}));
+        
+        expect(box.thing.name).to.equal(name);
+    });
 
-test('domain cover deep props', t => {
-    const mask = Mask.cover(Box).except();
-    
-    const name = 'Shoes';
+    it('domain cover deep free props', () => {
+        const mask = Mask.cover(UnknownBox).except();
+        
+        const name = 'Shoes';
 
-    const box = new Box({thing: {name: 'ignored'}});
-    mask.settle(box, new Box({thing: {name: name}}));
-    
-    t.is(box.thing.name, name);
-});
+        const box = new UnknownBox({thing: {name: 'ignored'}});
+        mask.settle(box, new UnknownBox({thing: {name: name}}));
+        
+        expect(box.thing.name).to.equal(name);
+    });
 
-test('domain cover & omit deep props', t => {
-    const mask = Mask.cover(Box).except({thing: {name: false}});
-    
-    const name = 'Shoes';
+    it('domain cover & omit deep free props', () => {
+        const mask = Mask.cover(UnknownBox).except({thing: false});
+        
+        const name = 'Shoes';
 
-    const box = new Box({thing: {name: name}});
-    mask.settle(box, new Box({thing: {name: 'overriden'}}));
-    
-    t.is(box.thing.name, name);
-});
+        const box = new UnknownBox({thing: {name: name}});
+        mask.settle(box, new UnknownBox({thing: {name: 'overriden'}}));
+        
+        expect(box.thing.name).to.equal(name);
+    });
 
-test('domain cover deep free props', t => {
-    const mask = Mask.cover(UnknownBox).except();
-    
-    const name = 'Shoes';
-
-    const box = new UnknownBox({thing: {name: 'ignored'}});
-    mask.settle(box, new UnknownBox({thing: {name: name}}));
-    
-    t.is(box.thing.name, name);
-});
-
-test('domain cover & omit deep free props', t => {
-    const mask = Mask.cover(UnknownBox).except({thing: false});
-    
-    const name = 'Shoes';
-
-    const box = new UnknownBox({thing: {name: name}});
-    mask.settle(box, new UnknownBox({thing: {name: 'overriden'}}));
-    
-    t.is(box.thing.name, name);
-});
-
-class UnreferencedBox extends Domain {
-    get props() {
-        return {
-            thing: {
-                name: String
-            }
-        };
+    class UnreferencedBox extends Domain {
+        get props() {
+            return {
+                thing: {
+                    name: String
+                }
+            };
+        }
     }
-}
 
-test('domain cover deep untyped props', t => {
-    const mask = Mask.cover(UnreferencedBox).except();
-    
-    const name = 'Shoes';
+    it('domain cover deep untyped props', () => {
+        const mask = Mask.cover(UnreferencedBox).except();
+        
+        const name = 'Shoes';
 
-    const box = new UnreferencedBox({thing: {name: 'ignored'}});
-    mask.settle(box, new UnreferencedBox({thing: {name: name}}));
-    
-    t.is(box.thing.name, name);
-});
+        const box = new UnreferencedBox({thing: {name: 'ignored'}});
+        mask.settle(box, new UnreferencedBox({thing: {name: name}}));
+        
+        expect(box.thing.name).to.equal(name);
+    });
 
-test('domain cover & omit deep untyped props', t => {
-    const mask = Mask.cover(UnreferencedBox).except({thing: {name: false}});
-    
-    const name = 'Shoes';
+    it('domain cover & omit deep untyped props', () => {
+        const mask = Mask.cover(UnreferencedBox).except({thing: {name: false}});
+        
+        const name = 'Shoes';
 
-    const box = new UnreferencedBox({thing: {name: name}});
-    mask.settle(box, new UnreferencedBox({thing: {name: 'overriden'}}));
-    
-    t.is(box.thing.name, name);
-});
+        const box = new UnreferencedBox({thing: {name: name}});
+        mask.settle(box, new UnreferencedBox({thing: {name: 'overriden'}}));
+        
+        expect(box.thing.name).to.equal(name);
+    });
 
-class DatedBox extends Domain {
-    get props() {
-        return {
-            date: Date
-        };
+    class DatedBox extends Domain {
+        get props() {
+            return {
+                date: Date
+            };
+        }
     }
-}
 
-test('assign, date untouched', t => {
-    const mask = Mask.cover(DatedBox);
+    it('assign, date untouched', () => {
+        const mask = Mask.cover(DatedBox);
 
-    const date = new Date();
+        const date = new Date();
 
-    const box = new DatedBox({date});
-    const touched = mask.settle(
-        box,
-        new DatedBox({date})
-    );
+        const box = new DatedBox({date});
+        const touched = mask.settle(
+            box,
+            new DatedBox({date})
+        );
 
-    t.is(box.date, date);
+        expect(box.date).to.equal(date);
 
-    t.is(touched.date, undefined);
-});
+        expect(touched.date).to.equal(undefined);
+    });
 
-test('assign, date touched', t => {
-    const mask = Mask.cover(DatedBox);
+    it('assign, date touched', () => {
+        const mask = Mask.cover(DatedBox);
 
-    const date = new Date();
-    const dateClone = new Date(date.getTime());
+        const date = new Date();
+        const dateClone = new Date(date.getTime());
 
-    const box = new DatedBox({date});
-    const touched = mask.settle(
-        box,
-        new DatedBox({date: dateClone})
-    );
+        const box = new DatedBox({date});
+        const touched = mask.settle(
+            box,
+            new DatedBox({date: dateClone})
+        );
 
-    t.is(box.date, date);
+        expect(box.date).to.equal(date);
 
-    t.is(touched.date, undefined);
-});
+        expect(touched.date).to.equal(undefined);
+    });
 
-test('assign, date touched & updated', t => {
-    const mask = Mask.cover(DatedBox);
+    it('assign, date touched & updated', () => {
+        const mask = Mask.cover(DatedBox);
 
-    const date = new Date();
-    const epoch = new Date();
-    epoch.setTime(0); // 1970-01-01
+        const date = new Date();
+        const epoch = new Date();
+        epoch.setTime(0); // 1970-01-01
 
-    const box = new DatedBox({date});
-    const touched = mask.settle(
-        box,
-        new DatedBox({date: epoch})
-    );
+        const box = new DatedBox({date});
+        const touched = mask.settle(
+            box,
+            new DatedBox({date: epoch})
+        );
 
-    t.is(box.date, date);
+        expect(box.date).to.equal(date);
 
-    t.true(touched.date);
+        expect(touched.date).to.equal(true);
+    });
 });

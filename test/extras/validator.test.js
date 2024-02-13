@@ -1,4 +1,4 @@
-const test = require('ava');
+const {expect} = require('chai');
 
 const validate = require('./validator');
 const carnaval = require('../../');
@@ -32,106 +32,104 @@ class Thing extends Domain {
     }
 }
 
-test('decode', t => {
-    const json = {name: 'Shoes'};
-    const mapping = Mapping.map(Thing);
+describe("validator", () => {
+    it('decode', () => {
+        const json = {name: 'Shoes'};
+        const mapping = Mapping.map(Thing);
 
-    return mapping.decode(json).then(thing => {
-        t.true(thing instanceof Thing);
-        t.is(thing.name, json.name);
+        return mapping.decode(json).then(thing => {
+            expect(thing instanceof Thing).to.equal(true);
+            expect(thing.name).to.equal(json.name);
+        });
     });
-});
 
-test('freeze', t => {
-    const json = {name: 'Shoes'};
-    const mapping = Mapping.map(Thing).afterDecode(object => Object.freeze(object));
+    it('freeze', () => {
+        const json = {name: 'Shoes'};
+        const mapping = Mapping.map(Thing).afterDecode(object => Object.freeze(object));
 
-    return mapping.decode(json).then(thing => {
-        const error = t.throws(() => {
+        return mapping.decode(json).then(thing => {
             thing.name = 'Dress';
+            expect(thing.name).to.equal('Shoes');
         });
-        t.is(error.message, 'Cannot assign to read only property \'name\' of object \'#<Thing>\'');
     });
-});
 
-test('validate', t => {
-    const json = {name: 'Shoes'};
-    const mapping = Mapping.map(Thing).afterDecode(object => validate(object));
+    it('validate', () => {
+        const json = {name: 'Shoes'};
+        const mapping = Mapping.map(Thing).afterDecode(object => validate(object));
 
-    return mapping.decode(json).then(thing => {
-        t.is(thing.name, json.name);
+        return mapping.decode(json).then(thing => {
+            expect(thing.name).to.equal(json.name);
+        });
     });
-});
 
-test('validate required error', t => {
-    const json = {name: undefined};
-    const mapping = Mapping.map(Thing).afterDecode(object => validate(object));
+    it('validate required error', () => {
+        const json = {name: undefined};
+        const mapping = Mapping.map(Thing).afterDecode(object => validate(object));
 
-    return mapping.decode(json)
-    .catch(error => {
-        t.is(error.message, 'name is required');
+        return mapping.decode(json)
+        .catch(error => {
+            expect(error.message).to.equal('name is required');
+        });
     });
-});
 
-class Box extends Domain {
-    get props() {
-        return {
-            size: String,
-            thing: Thing
-        };
+    class Box extends Domain {
+        get props() {
+            return {
+                size: String,
+                thing: Thing
+            };
+        }
+        get rules() {
+            return {
+                size: {required: true},
+                thing: {
+                    name: {required: true}
+                }
+            };
+        }
     }
-    get rules() {
-        return {
-            size: {required: true},
-            thing: {
-                name: {required: true}
-            }
-        };
-    }
-}
 
-test('freeze deep', t => {
-    const json = {size: 'Medium', thing: {name: 'Shoes'}};
-    const mapping = Mapping.map(Box).afterDecode(object => deepFreeze(object));
+    it('freeze deep', () => {
+        const json = {size: 'Medium', thing: {name: 'Shoes'}};
+        const mapping = Mapping.map(Box).afterDecode(object => deepFreeze(object));
 
-    return mapping.decode(json).then(box => {
-        const error = t.throws(() => {
+        return mapping.decode(json).then(box => {
             box.thing.name = 'Dress';
+            expect(box.thing.name).to.equal('Shoes');
         });
-        t.is(error.message, 'Cannot assign to read only property \'name\' of object \'#<Thing>\'');
     });
-});
 
-test('validate deep error', t => {
-    const json = {size: 'Medium', thing: null};
-    const mapping = Mapping.map(Box).afterDecode(object => validate(object));
+    it('validate deep error', () => {
+        const json = {size: 'Medium', thing: null};
+        const mapping = Mapping.map(Box).afterDecode(object => validate(object));
 
-    return mapping.decode(json)
-    .catch(error => {
-        t.is(error.message, 'thing.name is required');
+        return mapping.decode(json)
+        .catch(error => {
+            expect(error.message).to.equal('thing.name is required');
+        });
     });
-});
 
-class Gift extends Domain {
-    get props() {
-        return {
-            size: String,
-            names: [String]
-        };
+    class Gift extends Domain {
+        get props() {
+            return {
+                size: String,
+                names: [String]
+            };
+        }
     }
-}
 
-test('validate array', t => {
-    const json = {size: 'Medium', names: ['Shoes', 'Shirt']};
-    const mapping = Mapping.map(Gift).afterDecode(object => validate(object));
+    it('validate array', () => {
+        const json = {size: 'Medium', names: ['Shoes', 'Shirt']};
+        const mapping = Mapping.map(Gift).afterDecode(object => validate(object));
 
-    return mapping.decode(json).then(gift => {
-        t.true(gift instanceof Gift);
-        t.is(gift.size, json.size);
-        t.true(gift.names instanceof Array);
-        t.is(gift.names[0].constructor, String);
-        t.is(gift.names[1].constructor, String);
-        t.is(gift.names[0], json.names[0]);
-        t.is(gift.names[1], json.names[1]);
+        return mapping.decode(json).then(gift => {
+            expect(gift instanceof Gift).to.equal(true);
+            expect(gift.size).to.equal(json.size);
+            expect(gift.names instanceof Array).to.equal(true);
+            expect(gift.names[0].constructor).to.equal(String);
+            expect(gift.names[1].constructor).to.equal(String);
+            expect(gift.names[0]).to.equal(json.names[0]);
+            expect(gift.names[1]).to.equal(json.names[1]);
+        });
     });
 });

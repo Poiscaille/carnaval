@@ -1,4 +1,4 @@
-const test = require('ava');
+const {expect} = require('chai');
 
 const validate = require('./validator-ajv');
 const carnaval = require('../../');
@@ -18,366 +18,368 @@ class Thing extends Domain {
     }
 }
 
-test('validate', t => {
-    const json = {name: 'Shoes'};
-    const mapping = Mapping.map(Thing).afterDecode(object => validate(object));
+describe("validator-ajv", () => {
+    it('validate', () => {
+        const json = {name: 'Shoes'};
+        const mapping = Mapping.map(Thing).afterDecode(object => validate(object));
 
-    return mapping.decode(json)
-    .then(thing => {
-        t.is(thing.name, json.name);
+        return mapping.decode(json)
+        .then(thing => {
+            expect(thing.name).to.equal(json.name);
+        });
     });
-});
 
-test('validate as promise', t => {
-    const json = {name: 'Shoes'};
-    const mapping = Mapping.map(Thing).afterDecode(object => Promise.resolve(object).then(object => validate(object)));
+    it('validate as promise', () => {
+        const json = {name: 'Shoes'};
+        const mapping = Mapping.map(Thing).afterDecode(object => Promise.resolve(object).then(object => validate(object)));
 
-    return mapping.decode(json)
-    .then(thing => {
-        t.is(thing.name, json.name);
+        return mapping.decode(json)
+        .then(thing => {
+            expect(thing.name).to.equal(json.name);
+        });
     });
-});
 
-test('validate required error', t => {
-    const json = {};
-    const mapping = Mapping.map(Thing).afterDecode(object => validate(object));
+    it('validate required error', () => {
+        const json = {};
+        const mapping = Mapping.map(Thing).afterDecode(object => validate(object));
 
-    return mapping.decode(json)
-    .catch(error => {
-        t.is(error.message, 'should have required property \'name\'');
+        return mapping.decode(json)
+        .catch(error => {
+            expect(error.message).to.equal('should have required property \'name\'');
+        });
     });
-});
 
-test('validate typed error', t => {
-    const json = {name: 12};
-    const mapping = Mapping.map(Thing).normalize(false).afterDecode(object => validate(object));
+    it('validate typed error', () => {
+        const json = {name: 12};
+        const mapping = Mapping.map(Thing).normalize(false).afterDecode(object => validate(object));
 
-    return mapping.decode(json)
-    .catch(error => {
-        t.is(error.message, 'name should be string');
+        return mapping.decode(json)
+        .catch(error => {
+            expect(error.message).to.equal('name should be string');
+        });
     });
-});
 
-test('validate no typed error with normalize', t => {
-    const json = {name: 12};
-    const mapping = Mapping.map(Thing).afterDecode(object => validate(object));
+    it('validate no typed error with normalize', () => {
+        const json = {name: 12};
+        const mapping = Mapping.map(Thing).afterDecode(object => validate(object));
 
-    return mapping.decode(json).then(thing => {
-        t.is(thing.name, String(json.name));
+        return mapping.decode(json).then(thing => {
+            expect(thing.name).to.equal(String(json.name));
+        });
     });
-});
 
-class Box extends Domain {
-    get props() {
-        return {
-            size: String,
-            thing: Thing
-        };
-    }
-    get rules() {
-        return {
-            size: {required: true},
-            thing: {
-                name: {required: true}
-            }
-        };
-    }
-}
-
-test('validate deep error', t => {
-    const json = {size: 'Medium', thing: {}};
-    const mapping = Mapping.map(Box).afterDecode(object => validate(object));
-
-    return mapping.decode(json)
-    .catch(error => {
-        t.is(error.message, 'thing should have required property \'name\'');
-    });
-});
-
-class EmptyBox extends Domain {
-    get props() {
-        return {
-            size: String,
-            thing: Thing
-        };
-    }
-    get rules() {
-        return {
-            thing: {
-                name: {
-                    value: {enum: ['valued']}
+    class Box extends Domain {
+        get props() {
+            return {
+                size: String,
+                thing: Thing
+            };
+        }
+        get rules() {
+            return {
+                size: {required: true},
+                thing: {
+                    name: {required: true}
                 }
-            }
-        };
+            };
+        }
     }
-}
 
-test('validate deep (two levels) optionnal', t => {
-    const json = {};
-    const mapping = Mapping.map(EmptyBox).afterDecode(object => validate(object));
+    it('validate deep error', () => {
+        const json = {size: 'Medium', thing: {}};
+        const mapping = Mapping.map(Box).afterDecode(object => validate(object));
 
-    return mapping.decode(json)
-    .then(emptyBox => {
-        t.true(emptyBox instanceof EmptyBox);
-        t.is(emptyBox.thing, undefined);
+        return mapping.decode(json)
+        .catch(error => {
+            expect(error.message).to.equal('thing should have required property \'name\'');
+        });
     });
-});
 
-class NotEmptyBox extends Domain {
-    get props() {
-        return {
-            size: String,
-            thing: Thing
-        };
-    }
-    get rules() {
-        return {
-            thing: {
-                name: {
-                    value: {required: true, enum: ['valued']}
+    class EmptyBox extends Domain {
+        get props() {
+            return {
+                size: String,
+                thing: Thing
+            };
+        }
+        get rules() {
+            return {
+                thing: {
+                    name: {
+                        value: {enum: ['valued']}
+                    }
                 }
-            }
-        };
+            };
+        }
     }
-}
 
-test('validate deep (two levels) error', t => {
-    const json = {};
-    const mapping = Mapping.map(NotEmptyBox).afterDecode(object => validate(object));
+    it('validate deep (two levels) optionnal', () => {
+        const json = {};
+        const mapping = Mapping.map(EmptyBox).afterDecode(object => validate(object));
 
-    return mapping.decode(json)
-    .catch(error => {
-        t.is(error.message, 'should have required property \'thing\'');
+        return mapping.decode(json)
+        .then(emptyBox => {
+            expect(emptyBox instanceof EmptyBox).to.equal(true);
+            expect(emptyBox.thing).to.equal(undefined);
+        });
     });
-});
 
-class EmptyOrNotBox extends Domain {
-    get props() {
-        return {
-            size: String,
-            thing: Thing
-        };
-    }
-    get rules() {
-        return {
-            thing: {
-                required: false,
-                name: {
-                    value: {required: true, enum: ['valued']}
+    class NotEmptyBox extends Domain {
+        get props() {
+            return {
+                size: String,
+                thing: Thing
+            };
+        }
+        get rules() {
+            return {
+                thing: {
+                    name: {
+                        value: {required: true, enum: ['valued']}
+                    }
                 }
-            }
-        };
+            };
+        }
     }
-}
 
-test('validate deep (two levels) empty', t => {
-    const json = {};
-    const mapping = Mapping.map(EmptyOrNotBox).afterDecode(object => validate(object));
+    it('validate deep (two levels) error', () => {
+        const json = {};
+        const mapping = Mapping.map(NotEmptyBox).afterDecode(object => validate(object));
 
-    return mapping.decode(json)
-    .then(emptyBox => {
-        t.true(emptyBox instanceof EmptyOrNotBox);
-        t.is(emptyBox.thing, undefined);
+        return mapping.decode(json)
+        .catch(error => {
+            expect(error.message).to.equal('should have required property \'thing\'');
+        });
     });
-});
 
-test('validate deep (two levels) empty but not', t => {
-    const json = {thing: {}};
-    const mapping = Mapping.map(EmptyOrNotBox).afterDecode(object => validate(object));
-
-    return mapping.decode(json)
-    .catch(error => {
-        t.is(error.message, 'thing should have required property \'name\'');
-    });
-});
-
-class Gift extends Domain {
-    get props() {
-        return {
-            size: String,
-            names: [String]
-        };
+    class EmptyOrNotBox extends Domain {
+        get props() {
+            return {
+                size: String,
+                thing: Thing
+            };
+        }
+        get rules() {
+            return {
+                thing: {
+                    required: false,
+                    name: {
+                        value: {required: true, enum: ['valued']}
+                    }
+                }
+            };
+        }
     }
-    get rules() {
-        return {
-            names: {maxItems: 2, enum: ['Shoes', 'Shirt', '12']}
-        };
-    }
-}
 
-test('validate array', t => {
-    const json = {size: 'Medium', names: ['Shoes', 'Shirt']};
-    const mapping = Mapping.map(Gift).afterDecode(object => validate(object));
+    it('validate deep (two levels) empty', () => {
+        const json = {};
+        const mapping = Mapping.map(EmptyOrNotBox).afterDecode(object => validate(object));
 
-    return mapping.decode(json).then(gift => {
-        t.true(gift instanceof Gift);
-        t.is(gift.size, json.size);
-        t.true(gift.names instanceof Array);
-        t.is(gift.names[0].constructor, String);
-        t.is(gift.names[1].constructor, String);
-        t.is(gift.names[0], json.names[0]);
-        t.is(gift.names[1], json.names[1]);
+        return mapping.decode(json)
+        .then(emptyBox => {
+            expect(emptyBox instanceof EmptyOrNotBox).to.equal(true);
+            expect(emptyBox.thing).to.equal(undefined);
+        });
     });
-});
 
-test('validate array typed error', t => {
-    const json = {size: 'Medium', names: ['Shoes', 12]};
-    const mapping = Mapping.map(Gift).normalize(false).afterDecode(object => validate(object));
+    it('validate deep (two levels) empty but not', () => {
+        const json = {thing: {}};
+        const mapping = Mapping.map(EmptyOrNotBox).afterDecode(object => validate(object));
 
-    return mapping.decode(json)
-    .catch(error => {
-        t.is(error.message, 'names/1 should be string');
+        return mapping.decode(json)
+        .catch(error => {
+            expect(error.message).to.equal('thing should have required property \'name\'');
+        });
     });
-});
 
-test('validate array no typed error with normalize', t => {
-    const json = {size: 'Medium', names: ['Shoes', 12]};
-    const mapping = Mapping.map(Gift).afterDecode(object => validate(object));
+    class Gift extends Domain {
+        get props() {
+            return {
+                size: String,
+                names: [String]
+            };
+        }
+        get rules() {
+            return {
+                names: {maxItems: 2, enum: ['Shoes', 'Shirt', '12']}
+            };
+        }
+    }
 
-    return mapping.decode(json).then(gift => {
-        t.true(gift instanceof Gift);
-        t.is(gift.size, json.size);
-        t.true(gift.names instanceof Array);
-        t.is(gift.names[0].constructor, String);
-        t.is(gift.names[1].constructor, String);
-        t.is(gift.names[0], json.names[0]);
-        t.is(gift.names[1], String(json.names[1]));
+    it('validate array', () => {
+        const json = {size: 'Medium', names: ['Shoes', 'Shirt']};
+        const mapping = Mapping.map(Gift).afterDecode(object => validate(object));
+
+        return mapping.decode(json).then(gift => {
+            expect(gift instanceof Gift).to.equal(true);
+            expect(gift.size).to.equal(json.size);
+            expect(gift.names instanceof Array).to.equal(true);
+            expect(gift.names[0].constructor).to.equal(String);
+            expect(gift.names[1].constructor).to.equal(String);
+            expect(gift.names[0]).to.equal(json.names[0]);
+            expect(gift.names[1]).to.equal(json.names[1]);
+        });
     });
-});
 
-test('validate array condition error', t => {
-    const json = {size: 'Medium', names: ['Shoes', 'Shirt', 'Pants']};
-    const mapping = Mapping.map(Gift).afterDecode(object => validate(object));
+    it('validate array typed error', () => {
+        const json = {size: 'Medium', names: ['Shoes', 12]};
+        const mapping = Mapping.map(Gift).normalize(false).afterDecode(object => validate(object));
 
-    return mapping.decode(json)
-    .catch(error => {
-        t.is(error.message, 'names should NOT have more than 2 items');
+        return mapping.decode(json)
+        .catch(error => {
+            expect(error.message).to.equal('names/1 should be string');
+        });
     });
-});
 
-test('validate array content error', t => {
-    const json = {size: 'Medium', names: ['Shoe']};
-    const mapping = Mapping.map(Gift).afterDecode(object => validate(object));
+    it('validate array no typed error with normalize', () => {
+        const json = {size: 'Medium', names: ['Shoes', 12]};
+        const mapping = Mapping.map(Gift).afterDecode(object => validate(object));
 
-    return mapping.decode(json)
-    .catch(error => {
-        t.is(error.message, 'names/0 should be equal to one of the allowed values');
+        return mapping.decode(json).then(gift => {
+            expect(gift instanceof Gift).to.equal(true);
+            expect(gift.size).to.equal(json.size);
+            expect(gift.names instanceof Array).to.equal(true);
+            expect(gift.names[0].constructor).to.equal(String);
+            expect(gift.names[1].constructor).to.equal(String);
+            expect(gift.names[0]).to.equal(json.names[0]);
+            expect(gift.names[1]).to.equal(String(json.names[1]));
+        });
     });
-});
 
-class Bookcase extends Domain {
-    get props() {
-        return {
-            size: String,
-            things: [Thing]
-        };
-    }
-    get rules() {
-        return {
-            things: {
-                name: {required: true}
-            }
-        };
-    }
-}
+    it('validate array condition error', () => {
+        const json = {size: 'Medium', names: ['Shoes', 'Shirt', 'Pants']};
+        const mapping = Mapping.map(Gift).afterDecode(object => validate(object));
 
-test('validate array deep class error', t => {
-    const json = {size: 'Medium', things: [{name: 'Shoes'}, {name: 12}]};
-    const mapping = Mapping.map(Bookcase).normalize(false).afterDecode(object => validate(object));
-
-    return mapping.decode(json)
-    .catch(error => {
-        t.is(error.message, 'things/1/name should be string');
+        return mapping.decode(json)
+        .catch(error => {
+            expect(error.message).to.equal('names should NOT have more than 2 items');
+        });
     });
-});
 
-test('validate array no deep class error with normalize', t => {
-    const json = {size: 'Medium', things: [{name: 'Shoes'}, {name: 12}]};
-    const mapping = Mapping.map(Bookcase).afterDecode(object => validate(object));
+    it('validate array content error', () => {
+        const json = {size: 'Medium', names: ['Shoe']};
+        const mapping = Mapping.map(Gift).afterDecode(object => validate(object));
 
-    return mapping.decode(json).then(bookcase => {
-        t.true(bookcase instanceof Bookcase);
-        t.is(bookcase.size, json.size);
-        t.true(bookcase.things instanceof Array);
-        t.is(bookcase.things[0].constructor, Thing);
-        t.is(bookcase.things[1].constructor, Thing);
-        t.is(bookcase.things[0].name, json.things[0].name);
-        t.is(bookcase.things[1].name, String(json.things[1].name));
+        return mapping.decode(json)
+        .catch(error => {
+            expect(error.message).to.equal('names/0 should be equal to one of the allowed values');
+        });
     });
-});
 
-class UnreferencedBoxes extends Domain {
-    get props() {
-        return {
-            size: Number,
-            things: [{
-                name: String
-            }]
-        };
+    class Bookcase extends Domain {
+        get props() {
+            return {
+                size: String,
+                things: [Thing]
+            };
+        }
+        get rules() {
+            return {
+                things: {
+                    name: {required: true}
+                }
+            };
+        }
     }
-    get rules() {
-        return {
-            things: {
-                name: {required: true}
-            }
-        };
-    }
-}
 
-test('validate untyped deep error', t => {
-    const json = {size: 40, things: [{name: 'Shoes'}, {}]};
-    const mapping = Mapping.map(UnreferencedBoxes).afterDecode(object => validate(object));
+    it('validate array deep class error', () => {
+        const json = {size: 'Medium', things: [{name: 'Shoes'}, {name: 12}]};
+        const mapping = Mapping.map(Bookcase).normalize(false).afterDecode(object => validate(object));
 
-    return mapping.decode(json)
-    .catch(error => {
-        t.is(error.message, 'things/1 should have required property \'name\'');
+        return mapping.decode(json)
+        .catch(error => {
+            expect(error.message).to.equal('things/1/name should be string');
+        });
     });
-});
 
-class UnknownBoxes extends Domain {
-    get props() {
-        return {
-            size: Number,
-            things: [Object]
-        };
-    }
-    get rules() {
-        return {
-            things: {minItems: 1}
-        };
-    }
-}
+    it('validate array no deep class error with normalize', () => {
+        const json = {size: 'Medium', things: [{name: 'Shoes'}, {name: 12}]};
+        const mapping = Mapping.map(Bookcase).afterDecode(object => validate(object));
 
-test('validate free deep error', t => {
-    const json = {size: 40};
-    const mapping = Mapping.map(UnknownBoxes).afterDecode(object => validate(object));
-
-    return mapping.decode(json)
-    .catch(error => {
-        t.is(error.message, 'things should NOT have fewer than 1 items');
+        return mapping.decode(json).then(bookcase => {
+            expect(bookcase instanceof Bookcase).to.equal(true);
+            expect(bookcase.size).to.equal(json.size);
+            expect(bookcase.things instanceof Array).to.equal(true);
+            expect(bookcase.things[0].constructor).to.equal(Thing);
+            expect(bookcase.things[1].constructor).to.equal(Thing);
+            expect(bookcase.things[0].name).to.equal(json.things[0].name);
+            expect(bookcase.things[1].name).to.equal(String(json.things[1].name));
+        });
     });
-});
 
-class UnknownAlternativeBoxes extends Domain {
-    get props() {
-        return {
-            size: Number,
-            things: [Object]
-        };
+    class UnreferencedBoxes extends Domain {
+        get props() {
+            return {
+                size: Number,
+                things: [{
+                    name: String
+                }]
+            };
+        }
+        get rules() {
+            return {
+                things: {
+                    name: {required: true}
+                }
+            };
+        }
     }
-    get rules() {
-        return {
-            things: [{minItems: 1}]
-        };
+
+    it('validate untyped deep error', () => {
+        const json = {size: 40, things: [{name: 'Shoes'}, {}]};
+        const mapping = Mapping.map(UnreferencedBoxes).afterDecode(object => validate(object));
+
+        return mapping.decode(json)
+        .catch(error => {
+            expect(error.message).to.equal('things/1 should have required property \'name\'');
+        });
+    });
+
+    class UnknownBoxes extends Domain {
+        get props() {
+            return {
+                size: Number,
+                things: [Object]
+            };
+        }
+        get rules() {
+            return {
+                things: {minItems: 1}
+            };
+        }
     }
-}
 
-test('validate free deep error (alternative)', t => {
-    const json = {size: 40};
-    const mapping = Mapping.map(UnknownAlternativeBoxes).afterDecode(object => validate(object));
+    it('validate free deep error', () => {
+        const json = {size: 40};
+        const mapping = Mapping.map(UnknownBoxes).afterDecode(object => validate(object));
 
-    return mapping.decode(json)
-    .catch(error => {
-        t.is(error.message, 'things should NOT have fewer than 1 items');
+        return mapping.decode(json)
+        .catch(error => {
+            expect(error.message).to.equal('things should NOT have fewer than 1 items');
+        });
+    });
+
+    class UnknownAlternativeBoxes extends Domain {
+        get props() {
+            return {
+                size: Number,
+                things: [Object]
+            };
+        }
+        get rules() {
+            return {
+                things: [{minItems: 1}]
+            };
+        }
+    }
+
+    it('validate free deep error (alternative)', () => {
+        const json = {size: 40};
+        const mapping = Mapping.map(UnknownAlternativeBoxes).afterDecode(object => validate(object));
+
+        return mapping.decode(json)
+        .catch(error => {
+            expect(error.message).to.equal('things should NOT have fewer than 1 items');
+        });
     });
 });

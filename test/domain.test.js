@@ -1,4 +1,4 @@
-const test = require('ava');
+const {expect} = require('chai');
 
 const Domain = require('../lib/Domain');
 
@@ -10,27 +10,29 @@ class Thing extends Domain {
     }
 }
 
-test('domain creation', t => {
-    const name = 'Shoes';
-    const thing = new Thing({name});
+describe("domain", () => {
+    it('domain creation', () => {
+        const name = 'Shoes';
+        const thing = new Thing({name});
 
-    t.is(thing.name, name);
-});
+        expect(thing.name).to.equal(name);
+    });
 
-test('domain update', t => {
-    const name = 'Shirt';
-    const thing = new Thing({name: 'Shoes'});
+    it('domain update', () => {
+        const name = 'Shirt';
+        const thing = new Thing({name: 'Shoes'});
 
-    thing.name = name;
+        thing.name = name;
 
-    t.is(thing.name, name);
-});
+        expect(thing.name).to.equal(name);
+    });
 
-test('domain assign', t => {
-    const name = 'Shirt';
-    const thing = new Thing({name: 'Shoes'});
+    it('domain assign', () => {
+        const name = 'Shirt';
+        const thing = new Thing({name: 'Shoes'});
 
-    thing.assign({name: name});
+        thing.assign({name: name});
 
-    t.is(thing.name, name);
+        expect(thing.name).to.equal(name);
+    });
 });

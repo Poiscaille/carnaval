@@ -1,4 +1,5 @@
 {
+    "plugins": ["mocha"],
     "parserOptions": {
         "ecmaVersion": 7,//2016
         "sourceType": "module",
@@ -8,7 +9,8 @@
     },
     "env": {
         "node": true,
-        "es6": true
+        "es6": true,
+        "mocha": true
     },
     "rules": {
         "no-var": "error",

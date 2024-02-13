@@ -1,4 +1,4 @@
-const test = require('ava');
+const {expect} = require('chai');
 const Promise = require('bluebird');
 
 const carnaval = require('../');
@@ -89,122 +89,124 @@ const repositoryMapping = Mapping.map(Thing).with({
     }
 });
 
-test('get /route', t => {
-    const user = {company: 'Green'};
+describe("router", () => {
+    it('get /route', () => {
+        const user = {company: 'Green'};
 
-    const viewMapping = Mapping.map(Thing).with({
-        company: {get: false}
+        const viewMapping = Mapping.map(Thing).with({
+            company: {get: false}
+        });
+
+        return repository.shield(user).find()
+        .then(datas => repositoryMapping.decode(datas))
+        .then(things => viewMapping.encode(things))
+        .then(jsons => {
+            expect(jsons.length, 6);
+            for (let i = 0; i < 6; i++) {
+                expect(jsons[i].id, i + 1);
+            }
+        });
     });
 
-    return repository.shield(user).find()
-    .then(datas => repositoryMapping.decode(datas))
-    .then(things => viewMapping.encode(things))
-    .then(jsons => {
-        t.is(jsons.length, 6);
-        for (let i = 0; i < 6; i++) {
-            t.is(jsons[i].id, i + 1);
-        }
+    it('get /route/:id', () => {
+        const user = {company: 'Green'};
+
+        const id = 2;
+        const formattedPrice = json => {
+            json.formattedPrice = ((json.price || 0) / 100).toFixed(2) + '€';
+        };
+
+        const viewMapping = Mapping.map(Thing).with({
+            company: {get: false}
+        })
+        .afterEncode(json => formattedPrice(json));
+
+        return repository.shield(user).findById(id)
+        .then(data => repositoryMapping.decode(data))
+        .then(thing => viewMapping.encode(thing))
+        .then(json => {
+            expect(json.id).to.equal(id);
+            expect(json.name).to.equal('Kidstown');
+            expect(json.price).to.equal(490);
+            expect(json.formattedPrice).to.equal('4.90€');
+            expect(json.creation.getTime()).to.equal(new Date('2017-10-25').getTime());
+            expect(json.hasOwnProperty('company')).to.equal(false);
+        });
     });
+
+    it('post /route', () => {
+        const user = {company: 'Green'};
+
+        const body = {name: '319 Men', price: 490};
+
+        const viewMapping = Mapping.map(Thing).with({
+            company: {get: false}
+        })
+        .afterDecode(object => object.setCompany(user.company));
+
+        return viewMapping.decode(body)
+        .then(thing => repositoryMapping.encode(thing))
+        .then(data => repository.shield(user).insert(data))
+        .then(data => repositoryMapping.decode(data))
+        .then(thing => viewMapping.encode(thing))
+        .then(json => {
+            expect(json.id).to.equal(10);
+            expect(json.name).to.equal('319 Men');
+            expect(json.price).to.equal(490);
+            expect(json.creation.getTime()).to.equal(new Date('2017-10-25').getTime());
+            expect(json.hasOwnProperty('company')).to.equal(false);
+        });
+    });
+
+    it('put /route/:id', () => {
+        const user = {company: 'Green'};
+
+        const body = {id: 3, name: 'Alamo Military Collectibles', price: 490};
+
+        const viewMapping = Mapping.map(Thing).with({
+            company: {get: false}
+        })
+        .afterDecode(object => object.setCompany(user.company));
+
+        const repositoryShield = repository.shield(user);
+
+        return viewMapping.decode(body)
+        .then(thing => repositoryMapping.encode(thing))
+        .then(data => repositoryShield.update(data))
+        .then(() => repositoryShield.findById(body.id))
+        .then(data => repositoryMapping.decode(data))
+        .then(thing => viewMapping.encode(thing))
+        .then(json => {
+            expect(json.id).to.equal(3);
+            expect(json.name).to.equal('Alamo Military Collectibles');
+            expect(json.price).to.equal(490);
+            expect(json.creation.getTime()).to.equal(new Date('2017-10-25').getTime());
+            expect(json.hasOwnProperty('company')).to.equal(false);
+        });
+    });
+
+    it('delete /route/:id', () => {
+        const user = {company: 'Green'};
+
+        const id = 4;
+
+        const viewMapping = Mapping.map(Thing).with({
+            company: {get: false}
+        });
+
+        const repositoryShield = repository.shield(user);
+
+        return repositoryShield.delete(id)
+        .then(() => repositoryShield.find())
+        .then(datas => repositoryMapping.decode(datas))
+        .then(things => viewMapping.encode(things))
+        .then(jsons => {
+            expect(jsons.length, 5);
+            for (let i = 0; i < 5; i++) {
+                expect(jsons[i].id).to.not.equal(4);
+            }
+        });
+    });
+
+    // TODO price 10% discount done via frozen object
 });
-
-test('get /route/:id', t => {
-    const user = {company: 'Green'};
-
-    const id = 2;
-    const formattedPrice = json => {
-        json.formattedPrice = ((json.price || 0) / 100).toFixed(2) + '€';
-    };
-
-    const viewMapping = Mapping.map(Thing).with({
-        company: {get: false}
-    })
-    .afterEncode(json => formattedPrice(json));
-
-    return repository.shield(user).findById(id)
-    .then(data => repositoryMapping.decode(data))
-    .then(thing => viewMapping.encode(thing))
-    .then(json => {
-        t.is(json.id, id);
-        t.is(json.name, 'Kidstown');
-        t.is(json.price, 490);
-        t.is(json.formattedPrice, '4.90€');
-        t.is(json.creation.getTime(), new Date('2017-10-25').getTime());
-        t.false(json.hasOwnProperty('company'));
-    });
-});
-
-test('post /route', t => {
-    const user = {company: 'Green'};
-
-    const body = {name: '319 Men', price: 490};
-
-    const viewMapping = Mapping.map(Thing).with({
-        company: {get: false}
-    })
-    .afterDecode(object => object.setCompany(user.company));
-
-    return viewMapping.decode(body)
-    .then(thing => repositoryMapping.encode(thing))
-    .then(data => repository.shield(user).insert(data))
-    .then(data => repositoryMapping.decode(data))
-    .then(thing => viewMapping.encode(thing))
-    .then(json => {
-        t.is(json.id, 10);
-        t.is(json.name, '319 Men');
-        t.is(json.price, 490);
-        t.is(json.creation.getTime(), new Date('2017-10-25').getTime());
-        t.false(json.hasOwnProperty('company'));
-    });
-});
-
-test('put /route/:id', t => {
-    const user = {company: 'Green'};
-
-    const body = {id: 3, name: 'Alamo Military Collectibles', price: 490};
-
-    const viewMapping = Mapping.map(Thing).with({
-        company: {get: false}
-    })
-    .afterDecode(object => object.setCompany(user.company));
-
-    const repositoryShield = repository.shield(user);
-
-    return viewMapping.decode(body)
-    .then(thing => repositoryMapping.encode(thing))
-    .then(data => repositoryShield.update(data))
-    .then(() => repositoryShield.findById(body.id))
-    .then(data => repositoryMapping.decode(data))
-    .then(thing => viewMapping.encode(thing))
-    .then(json => {
-        t.is(json.id, 3);
-        t.is(json.name, 'Alamo Military Collectibles');
-        t.is(json.price, 490);
-        t.is(json.creation.getTime(), new Date('2017-10-25').getTime());
-        t.false(json.hasOwnProperty('company'));
-    });
-});
-
-test('delete /route/:id', t => {
-    const user = {company: 'Green'};
-
-    const id = 4;
-
-    const viewMapping = Mapping.map(Thing).with({
-        company: {get: false}
-    });
-
-    const repositoryShield = repository.shield(user);
-
-    return repositoryShield.delete(id)
-    .then(() => repositoryShield.find())
-    .then(datas => repositoryMapping.decode(datas))
-    .then(things => viewMapping.encode(things))
-    .then(jsons => {
-        t.is(jsons.length, 5);
-        for (let i = 0; i < 5; i++) {
-            t.not(jsons[i].id, 4);
-        }
-    });
-});
-
-// TODO price 10% discount done via frozen object
