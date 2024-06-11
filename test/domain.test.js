@@ -10,7 +10,7 @@ class Thing extends Domain {
     }
 }
 
-describe("domain", () => {
+describe('domain', () => {
     it('domain creation', () => {
         const name = 'Shoes';
         const thing = new Thing({name});
@@ -31,7 +31,7 @@ describe("domain", () => {
         const name = 'Shirt';
         const thing = new Thing({name: 'Shoes'});
 
-        thing.assign({name: name});
+        Domain.assign(thing, {name: name});
 
         expect(thing.name).to.equal(name);
     });
