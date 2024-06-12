@@ -17,9 +17,9 @@
         "ajv": "7.0.x",
         "bluebird": "3.7.x",
         "chai": "4.3.x",
-        "eslint": "7.11.x",
+        "eslint": "8.56.x",
         "eslint-plugin-mocha": "10.4.x",
-        "mocha": "10.3.x"
+        "mocha": "10.4.x"
     },
     "ava": {
         "files": [
