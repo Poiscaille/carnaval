@@ -14,7 +14,7 @@ class Thing extends Domain {
     }
 }
 
-describe("Mark", () => {
+describe('Mark', () => {
     it('assign, touched & schema', () => {
         const mask = Mask.cover(Thing).with({
             size: true,

@@ -12,6 +12,14 @@
         "es6": true,
         "mocha": true
     },
+    "overrides": [
+        {
+            "files": ["*.test.js"],
+            "parserOptions": {
+                "ecmaVersion": 2022
+            }
+        }
+    ],
     "rules": {
         "no-var": "error",
         "prefer-const": [

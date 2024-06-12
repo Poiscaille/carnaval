@@ -32,7 +32,7 @@ class Thing extends Domain {
     }
 }
 
-describe("validator", () => {
+describe('validator', () => {
     it('decode', () => {
         const json = {name: 'Shoes'};
         const mapping = Mapping.map(Thing);
@@ -73,6 +73,11 @@ describe("validator", () => {
     });
 
     class Box extends Domain {
+        constructor(data) {
+            super();
+            Domain.assign(this, data);
+        }
+
         get props() {
             return {
                 size: String,
@@ -110,6 +115,11 @@ describe("validator", () => {
     });
 
     class Gift extends Domain {
+        constructor(data) {
+            super();
+            Domain.assign(this, data);
+        }
+
         get props() {
             return {
                 size: String,

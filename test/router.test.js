@@ -78,7 +78,7 @@ class Thing extends Domain {
         };
     }
     setCompany(company) {
-        return this.assign({company: company});
+        return Domain.override(this, {company: company});
     }
 }
 
@@ -89,7 +89,7 @@ const repositoryMapping = Mapping.map(Thing).with({
     }
 });
 
-describe("router", () => {
+describe('router', () => {
     it('get /route', () => {
         const user = {company: 'Green'};
 
