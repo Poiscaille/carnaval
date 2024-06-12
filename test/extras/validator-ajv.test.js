@@ -18,7 +18,7 @@ class Thing extends Domain {
     }
 }
 
-describe("validator-ajv", () => {
+describe('validator-ajv', () => {
     it('validate', () => {
         const json = {name: 'Shoes'};
         const mapping = Mapping.map(Thing).afterDecode(object => validate(object));

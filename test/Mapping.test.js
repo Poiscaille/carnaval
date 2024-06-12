@@ -11,7 +11,7 @@ class Thing extends Domain {
     }
 }
 
-describe("Mapping", () => {
+describe('Mapping', () => {
     it('decode through mapping', () => {
         const mapping = Mapping.map(Thing);
         const json = {name: 'Shoes'};

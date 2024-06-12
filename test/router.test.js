@@ -89,7 +89,7 @@ const repositoryMapping = Mapping.map(Thing).with({
     }
 });
 
-describe("router", () => {
+describe('router', () => {
     it('get /route', () => {
         const user = {company: 'Green'};
 
