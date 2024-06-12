@@ -251,6 +251,28 @@ class Friend extends Domain {
 }
 ```
 
+Note that if you declare class properties, you need to override default constructor:
+```javascript
+const Domain = carnaval.Domain;
+
+class Friend extends Domain {
+    name;
+    age;
+
+    constructor(data) {
+        super();
+        Domain.assign(this, data);
+    }
+    
+    get props() {
+        return {
+            name: String,
+            age: Number
+        };
+    }
+}
+```
+
 **Domain validation**
 
 A `rules` attributes can be used to define a validation schema. A custom validate implentation can then handle all the checks. An [ajv implentation](./test/extras/validator-ajv.js) is providen as an example.
