@@ -294,6 +294,47 @@ describe('Mark', () => {
         expect(touched.thing).to.equal(undefined);
     });
 
+
+    class Coupon extends Domain {
+        get props() {
+            return {
+                code: String,
+                ref: {
+                    usage: Number
+                }
+            };
+        }
+    }
+
+    class Packaging extends Domain {
+        get props() {
+            return {
+                cardboard: {
+                    recyclable: true,
+                    coupon: Coupon
+                }
+            };
+        }
+    }
+
+    it('assign empty undefined class deep, touched & schema', () => {
+        const mask = Mask.cover(Packaging).with({
+            cardboard: {
+                recyclable: true
+            }
+        });
+        
+        const packaging = new Packaging({cardboard: {coupon: null}});
+
+        const touched = mask.settle(
+            packaging,
+            new Packaging({cardboard: {recyclable: true, coupon: new Coupon({code: 'CODE', ref: {usage: 0}})}})
+        );
+
+
+        expect(touched.cardboard.coupon).to.deep.equal({});
+    });
+
     it('assign empty deeply, touched & schema', () => {
         const mask = Mask.cover(Box).with({
             thing: {
