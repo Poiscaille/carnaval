@@ -332,7 +332,7 @@ describe('Mark', () => {
         );
 
 
-        expect(touched.cardboard.coupon).to.equal(true);
+        expect(touched.cardboard.coupon).to.deep.equal({});
     });
 
     it('assign empty deeply, touched & schema', () => {
