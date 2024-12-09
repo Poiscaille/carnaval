@@ -742,6 +742,8 @@ describe('Mapping', () => {
         const mapping = Mapping.map(UnreferencedBox).with({
             size: {alias: 'fullsize'},
             thing: {name: {alias: 'fullname'}}
+        }).afterDecode((box, original) => {
+            expect(original.fullsize).to.equal(40);
         });
         const json = {fullsize: 40, thing: {fullname: 'Shoes'}};
 
@@ -784,6 +786,8 @@ describe('Mapping', () => {
         const mapping = Mapping.map(UnreferencedBoxes).with({
             size: {alias: 'fullsize'},
             things: [{name: {alias: 'fullname'}}]
+        }).afterEncode((json, original) => {
+            expect(original.size).to.equal(40);
         });
         const boxes = new UnreferencedBoxes({size: 40, things: [new Thing({name: 'Shoes'})]});
 
@@ -1010,7 +1014,7 @@ describe('Mapping', () => {
                 return value.toUpperCase();
             }
         })
-        .afterEncode((json, providers) => {
+        .afterEncode((json, original, providers) => {
             json.formattedName = providers.toUpperCase(json.name);
         });
         const thing = new Thing({name: 'Shoes'});

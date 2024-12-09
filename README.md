@@ -184,7 +184,7 @@ const mapping = Mapping.map(Friend)
 .providers({
     upperCase: value => value.toUpperCase()
 })
-.afterEncode((json, providers) => {
+.afterEncode((json, original, providers) => {
     json.formattedName = providers.upperCase(json.name)
 });
 ```
