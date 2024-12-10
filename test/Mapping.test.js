@@ -886,7 +886,9 @@ describe('Mapping', () => {
             clone.name = `2x ${clone.name}`;
             return clone;
         })
-        .afterDecode(object => {
+        .afterDecode((object, original) => {
+            expect(original.name).to.equal('Shoes');
+
             object.formattedName = object.name.toLowerCase();
             return object;
         });
@@ -907,7 +909,9 @@ describe('Mapping', () => {
             clone.name = `2x ${clone.name}`;
             return clone;
         })
-        .afterEncode(json => {
+        .afterEncode((json, original) => {
+            expect(original.name).to.equal('Shoes');
+
             json.formattedName = json.name.toLowerCase();
             return json;
         });
