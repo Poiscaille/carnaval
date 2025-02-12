@@ -152,7 +152,7 @@ describe('Mark', () => {
         );
 
         expect(gift.names).to.deep.equal(['Jeans', 'Shirt']);
-        expect(touched.names).to.equal(undefined);
+        expect(touched.names).to.deep.equal([false, false]);
     });
 
     it('assign empty array, touched & schema', () => {
@@ -169,7 +169,7 @@ describe('Mark', () => {
         );
 
         expect(gift.names).to.deep.equal([]);
-        expect(touched.names).to.equal(undefined);
+        expect(touched.names).to.deep.equal([]);
     });
 
     class Box extends Domain {
@@ -569,7 +569,7 @@ describe('Mark', () => {
             expect(boxes.things[i].physical).to.equal(physical);
         }
 
-        expect(touched.things).to.equal(undefined);
+        expect(touched.things).to.deep.equal([false]);
     });
 
     it('assign deep array, typed', () => {
