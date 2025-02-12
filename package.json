@@ -19,7 +19,7 @@
         "chai": "4.3.x",
         "eslint": "8.56.x",
         "eslint-plugin-mocha": "10.4.x",
-        "mocha": "10.4.x"
+        "mocha": "10.8.x"
     },
     "ava": {
         "files": [
