@@ -106,6 +106,21 @@ describe('Mark', () => {
         expect(touched.names).to.deep.equal([true, false]);
     });
 
+    it('assign array, touched (same but more)', () => {
+        const mask = Mask.cover(Gift);
+
+        const names = ['Shoes', 'Shirt'];
+
+        const gift = new Gift({names});
+        const touched = mask.settle(
+            gift,
+            new Gift({names: ['Shoes', 'Shirt', 'Jeans']})
+        );
+
+        expect(gift.names).to.deep.equal(['Shoes', 'Shirt']);
+        expect(touched.names).to.deep.equal([false, false]);
+    });
+
     it('assign empty array, touched', () => {
         const mask = Mask.cover(Gift);
 
@@ -152,7 +167,7 @@ describe('Mark', () => {
         );
 
         expect(gift.names).to.deep.equal(['Jeans', 'Shirt']);
-        expect(touched.names).to.deep.equal([false, false]);
+        expect(touched.names).to.equal(undefined);
     });
 
     it('assign empty array, touched & schema', () => {
@@ -169,7 +184,7 @@ describe('Mark', () => {
         );
 
         expect(gift.names).to.deep.equal([]);
-        expect(touched.names).to.deep.equal([]);
+        expect(touched.names).to.equal(undefined);
     });
 
     class Box extends Domain {
@@ -569,7 +584,7 @@ describe('Mark', () => {
             expect(boxes.things[i].physical).to.equal(physical);
         }
 
-        expect(touched.things).to.deep.equal([false]);
+        expect(touched.things).to.equal(undefined);
     });
 
     it('assign deep array, typed', () => {
